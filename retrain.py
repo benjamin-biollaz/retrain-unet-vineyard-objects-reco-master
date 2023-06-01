@@ -14,6 +14,7 @@ import cv2
 import numpy as np
 import config
 from datetime import datetime
+import traceback
 
 ### Set the initial variables ------------------------------------------------------------------------------------------
 
@@ -389,11 +390,12 @@ def main():
 
     except Exception as e:
 
-        # Display the final message
+        # Display the error message
         print("Training aborted due to the following error:")
         print(e)
 
-    # sys.stdout.close()
+        # print traceback
+        traceback.print_exc()
 
 ### Run the main function ----------------------------------------------------------------------------------------------
 
