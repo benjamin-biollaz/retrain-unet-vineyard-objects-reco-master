@@ -387,10 +387,11 @@ def main():
         # Display the final message
         print('Successful retraining!')
 
-    except:
+    except Exception as e:
 
         # Display the final message
-        print("No successful retraining, try again!")
+        print("Training aborted due to the following error:")
+        print(e)
 
     # sys.stdout.close()
 
