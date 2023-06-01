@@ -15,6 +15,7 @@ import numpy as np
 import config
 from datetime import datetime
 import traceback
+from unet_model import unet_sym
 
 ### Set the initial variables ------------------------------------------------------------------------------------------
 
@@ -226,36 +227,6 @@ def augment_data(path, subfolder, augmentation_path):
         # horizontal flip
         transformation = cv2.flip(img, 1)
         cv2.imwrite(augmentation_path + file_name + '_aug-flip-hor_' + file_extension, transformation)
-
-
-### Get the unet algorithme architecture -------------------------------------------------------------------------------
-
-def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
-    inputs = Input(input_size)
-    conv1 = Conv2D(3, (2, 2), activation='relu', padding='valid', kernel_initializer='he_normal', strides=2)(inputs)
-    conv2 = Conv2D(6, (3, 3), activation='relu', padding='valid', kernel_initializer='he_normal', strides=3)(conv1)
-    conv3 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv2)
-    conv4 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv3)
-    conv5 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv4)
-    conv6 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv5)
-    conv7 = Conv2D(24, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv6)
-    up7 = UpSampling2D(size=(3, 3))(conv7)
-    merge7 = concatenate([conv5, up7], axis=3)
-    up8 = UpSampling2D(size=(2, 2))(merge7)
-    merge8 = concatenate([conv2, up8], axis=3)
-    up9 = UpSampling2D(size=(3, 3))(merge8)
-    up10 = UpSampling2D(size=(2, 2))(up9)
-    conv10 = Conv2D(2, (1, 1), activation='sigmoid', padding='same', kernel_initializer='he_normal')(up10)
-
-    model = Model(inputs, conv10)
-
-    model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
-    #model.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
-
-    if pretrained_weights:
-        model.load_weights(pretrained_weights)
-
-    return model
 
 ### Main function ------------------------------------------------------------------------------------------------------
 
