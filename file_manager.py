@@ -3,7 +3,7 @@ import os
 class FileManager:
 
     ## Get the sample from path
-    def get_sample(path, subfolder):
+    def get_sample(self, path, subfolder):
         sample_paths = sorted(
             [
                 os.path.join(path, fname)
@@ -14,7 +14,7 @@ class FileManager:
         return sample_paths
 
     ## Get the file name and file extension
-    def get_filename_n_extension(path):
+    def get_filename_n_extension(self, path):
         gfe_split_name = path.split(os.path.sep)
         gfe_file = gfe_split_name[-1]
         gfe_filename = gfe_file.split('.')[0].split('/')[-1]

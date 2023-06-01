@@ -14,7 +14,6 @@ class ImageManager:
     
     ## Formate image according to algorithm input
     def image_splitting(self, image):
-        print('splitting images')
         is_tab = list()
         is_x = 0
         pad = int((config.CUT_SIZE - self.cut_size) / 2)
@@ -72,7 +71,7 @@ class ImageManager:
                 cut_size = int(config.CUT_SIZE / ratio)
                 gt_size = int(config.GT_SIZE / ratio)
 
-            patches = self.image_splitting(img, cut_size, gt_size)
+            patches = self.image_splitting(img)
             # print(len(patches))
             i = 1
             for patch in patches:

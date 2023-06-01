@@ -57,16 +57,14 @@ fileManager = FileManager()
 imageManager = ImageManager(cut_size, gt_size)
 
 ## Print sample size and paths
-def print_set(images_path, images_subfolder, labels_path, labels_subfolder):
-    images_sample_paths = fileManager.get_sample(images_path, images_subfolder)
+def print_set(image_path, images_subfolder, labels_path, labels_subfolder):
+    images_sample_paths = fileManager.get_sample(image_path, images_subfolder)
     labels_sample_paths = fileManager.get_sample(labels_path, labels_subfolder)
 
     print("Number of samples:", len(images_sample_paths))
     print("10 first samples : ")
 
-    for image_path, label_path in zip(
-        images_sample_paths[:10], labels_sample_paths[:10]
-    ):
+    for image_path, label_path in zip(images_sample_paths[:10], labels_sample_paths[:10]):
         print(image_path, "|", label_path)
 
 
@@ -91,11 +89,12 @@ def load_model():
 
     # Set the model to retrain
     unet_to_retrain = Model(initial_model.input, initial_model.output)
-    print(unet_to_retrain.summary())
+    #print(unet_to_retrain.summary())
     for layer in unet_to_retrain.layers:
         print(layer.name," | weights:",len(layer.weights)," | trainable weights:",len(layer.trainable_weights),
             " | non trainable weights:",len(layer.non_trainable_weights)," | trainable layer:",layer.trainable,)
         # print(layer.weights)
+    return unet_to_retrain
 
 
 def print_sample_information():
@@ -122,10 +121,10 @@ def replace_patches(validation_images_path, validation_labels_path, train_images
         fileManager.remove_patches(validation_labels_path, labels_subfolder)
 
         # Prepare patches for the images and the labels
-        imageManager.create_patches(train_images_path, subfolder, cut_size, gt_size)
-        imageManager.create_patches(train_labels_path, labels_subfolder, cut_size, gt_size)
-        imageManager.create_patches(validation_images_path, subfolder, cut_size, gt_size)
-        imageManager.create_patches(validation_labels_path, labels_subfolder, cut_size, gt_size)
+        imageManager.create_patches(train_images_path, subfolder, cut_size, gt_size, retrain_with_initial_ratio, retrain_with_new_ratio)
+        imageManager.create_patches(train_labels_path, labels_subfolder, cut_size, gt_size, retrain_with_initial_ratio, retrain_with_new_ratio)
+        imageManager.create_patches(validation_images_path, subfolder, cut_size, gt_size, retrain_with_initial_ratio, retrain_with_new_ratio)
+        imageManager.create_patches(validation_labels_path, labels_subfolder, cut_size, gt_size, retrain_with_initial_ratio, retrain_with_new_ratio)
 
 
 ### Main function ------------------------------------------------------------------------------------------------------
@@ -165,8 +164,8 @@ def main():
         replace_patches(validation_images_path, validation_labels_path, train_images_path, train_labels_path)
 
         # Pre-process images and masks
-        training_generator = imageManager.data_generator(train_images_path, subfolder, train_labels_path, labels_subfolder)
-        validation_generator = imageManager.data_generator(validation_images_path, subfolder, validation_labels_path, labels_subfolder)
+        training_generator = imageManager.data_generator(train_images_path, subfolder, train_labels_path, labels_subfolder, batch_size)
+        validation_generator = imageManager.data_generator(validation_images_path, subfolder, validation_labels_path, labels_subfolder, batch_size)
 
         # Get the number of training sample and print it
         if use_augmentation == True:
