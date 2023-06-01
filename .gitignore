@@ -1,2 +1,8 @@
 // vineyard images
-**/datasets/
+**/datasets/**/images
+**/datasets/check_augmentation_online/iteration_09-01_batch-1
+**/datasets/check_augmentation_online/iteration_09-01_batch-32
+**/datasets/check_augmentation_online/iteration_09-02_batch-32
+**/datasets/check_augmentation_online/iteration_09-03_batch-32
+**/datasets/check_augmentation_online/iteration_09-04_batch-32
+**/datasets/train_labels/labels

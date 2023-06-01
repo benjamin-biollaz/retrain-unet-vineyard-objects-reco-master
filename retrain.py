@@ -249,6 +249,7 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     model = Model(inputs, conv10)
 
     model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
+    #model.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
 
     if pretrained_weights:
         model.load_weights(pretrained_weights)
@@ -321,6 +322,8 @@ def main():
 
         # Compile model
         unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=performance_metric)
+        #unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
+
 
         # Set the images and labels paths
         if use_augmentation == True:
