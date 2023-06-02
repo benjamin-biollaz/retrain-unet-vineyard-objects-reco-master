@@ -5,6 +5,7 @@ import numpy as np
 
 from file_manager import FileManager
 
+
 class ImageManager:
     def __init__(self, cut_size, gt_size):
        self.cut_size = cut_size
@@ -20,12 +21,10 @@ class ImageManager:
         if pad*2 < config.CUT_SIZE:
             pad_left_top = pad+1
 
-        while is_x + cut_size < image.shape[1]:
+        while is_x + cut_size < image.shape[1]:  # IMAGE.SHAPE[1] = LARGEUR
             is_y = 0
-            while is_y + cut_size < image.shape[0]:
-                is_tab.append(cv2.resize(image[is_y:is_y + cut_size, is_x: is_x + cut_size],
-                                        (config.CUT_SIZE, config.CUT_SIZE),
-                                        interpolation=cv2.INTER_AREA))
+            while is_y + cut_size < image.shape[0]: # IMAGE.SHAPE[0] = HAUTEUR
+                is_tab.append(cv2.resize(image[is_y:is_y + cut_size, is_x: is_x + cut_size],(config.CUT_SIZE, config.CUT_SIZE),interpolation=cv2.INTER_AREA))
                 # is_tab.append(image[is_y:is_y + cut_size, is_x: is_x + cut_size])
                 # is_tab.append(cv2.copyMakeBorder(image[is_y:is_y + cut_size, is_x: is_x + cut_size],
                 #                                  pad_left_top, pad, pad_left_top, pad, cv2.BORDER_CONSTANT, value=[0, 0, 0]))
@@ -33,7 +32,7 @@ class ImageManager:
             is_x += gt_size
         return is_tab
 
-    ## Create patches according to the input size
+    # Create patches according to the input size
     def create_patches(self, files_path, files_subfolder, pretrained_resolution, new_data_resolution,  retrain_with_initial_ratio, retrain_with_new_ratio):
         sample_paths = self.fileManager.get_sample(files_path, files_subfolder)
 
@@ -43,14 +42,14 @@ class ImageManager:
             file_extension = self.fileManager.get_filename_n_extension(path)[1]
             img = cv2.imread(path)
 
-            if retrain_with_initial_ratio == True and retrain_with_new_ratio == False:
+            if retrain_with_initial_ratio and not retrain_with_new_ratio:
                 if img.shape[0] < 3000:
                     img_height = img.shape[0]
                     ratio = (config.ORIGINAL_HEIGHT / img_height) + 2
                     cut_size_with_ratio = int(config.CUT_SIZE / ratio)
                     gt_size_with_ratio = int(config.GT_SIZE / ratio)
 
-            if retrain_with_new_ratio == True:
+            if retrain_with_new_ratio:
                 ratio = new_data_resolution/pretrained_resolution
                 cut_size_with_ratio = int(config.CUT_SIZE / ratio)
                 gt_size_with_ratio = int(config.GT_SIZE / ratio)
@@ -63,7 +62,7 @@ class ImageManager:
                 i += 1
                 # print(len(patch))
 
-    ## Pre-processing for mask and images
+    # Pre-processing for mask and images
     def data_generator(self, images_path, images_subfolder, labels_path, labels_subfolder, batch_size):
 
         image_generator = tf.keras.preprocessing.image.ImageDataGenerator()
@@ -113,7 +112,7 @@ class ImageManager:
             yield img, label
 
 
-## Augment images trough roation and flip
+    # Augment images trough roation and flip
     def augment_data(self, path, subfolder, augmentation_path):
         images_paths = self.fileManager.get_sample(path, subfolder)
 

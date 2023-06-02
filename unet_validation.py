@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from unet_model import *
 from datetime import datetime
 import config
+from image_manager import ImageManager
 
 
 # Recuperation des filenames et file_extension
@@ -27,29 +28,6 @@ def get_filename_n_extension(path):
     gfe_filename = gfe_file.split(".")[0].split('/')[-1]
     gfe_ext = "." + gfe_file.split(".")[1]
     return gfe_filename, gfe_ext
-
-
-# Preparation de l'image au format de reception du modele
-def image_splitting(image, cut_size, gt_size):
-    is_tab = list()
-    is_x = 0
-    pad = int((config.CUT_SIZE - cut_size) / 2)
-    pad_left_top = pad
-
-    if pad*2 < config.CUT_SIZE:
-        pad_left_top = pad+1
-
-    while is_x + cut_size < image.shape[1]:         # IMAGE.SHAPE[1] = LARGEUR
-        is_y = 0
-        while is_y + cut_size < image.shape[0]:     # IMAGE.SHAPE[0] = HAUTEUR
-            is_tab.append(cv2.resize(image[is_y:is_y + cut_size, is_x: is_x + cut_size], (config.CUT_SIZE, config.CUT_SIZE), interpolation=cv2.INTER_AREA))
-            # is_tab.append(image[is_y:is_y + cut_size, is_x: is_x + cut_size])
-            # is_tab.append(cv2.copyMakeBorder(image[is_y:is_y + cut_size, is_x: is_x + cut_size],
-            #                                  pad_left_top, pad, pad_left_top, pad, cv2.BORDER_CONSTANT, value=[0, 0, 0]))
-            is_y += gt_size
-        is_x += gt_size
-    return is_tab
-
 
 # Formatage de la liste cree par image_splitting
 def val_generator(img_lst):
@@ -222,7 +200,8 @@ def main(argv):
         cut_size = int(config.CUT_SIZE/ratio)
         gt_size = int(config.GT_SIZE/ratio)
 
-    img_list = image_splitting(image, cut_size, gt_size)
+    imageManager = ImageManager(cut_size, gt_size)
+    img_list = imageManager.image_splitting(image, cut_size, gt_size)
     count_img = len(img_list)
     test_gen = val_generator(img_list)
 

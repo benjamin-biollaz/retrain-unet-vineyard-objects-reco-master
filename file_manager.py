@@ -2,7 +2,7 @@ import os
 
 class FileManager:
 
-    ## Get the sample from path
+    # Get the sample from path
     def get_sample(self, path, subfolder):
         sample_paths = sorted(
             [
@@ -13,7 +13,7 @@ class FileManager:
         )
         return sample_paths
 
-    ## Get the file name and file extension
+    # Get the file name and file extension
     def get_filename_n_extension(self, path):
         gfe_split_name = path.split(os.path.sep)
         gfe_file = gfe_split_name[-1]
@@ -21,7 +21,7 @@ class FileManager:
         gfe_ext = '.' + gfe_file.split('.')[1]
         return gfe_filename, gfe_ext
 
-    ## Remove existing patches
+    # Remove existing patches
     def remove_patches(self, files_path, files_subfolder):
         sample_paths = self.get_sample(files_path + files_subfolder + '/', 'None')
         for path in sample_paths:

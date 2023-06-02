@@ -11,14 +11,11 @@ from unet_model import unet_sym
 from image_manager import ImageManager
 from file_manager import FileManager
 
-import cv2
-import config
-
 ### Set the initial variables ------------------------------------------------------------------------------------------
 
 ## Model to retrain
-cut_size = 144
-gt_size = 144
+cut_size = 144 #patches size for the detection
+gt_size = 144 # patches size of the labels
 input_size = (cut_size, cut_size, 3)
 weights_path = "Weights/"
 pretrained_weights = "unet_vines.hdf5"
@@ -72,7 +69,7 @@ def print_set(image_path, images_subfolder, labels_path, labels_subfolder):
 
 
 def load_model():
-    # Load model without pretrained weights
+    # Load model without pretrained's weights
     # no_weigths_model = unet_sym(input_size=input_size)
     # print(no_weigths_model.summary())
 
@@ -101,18 +98,17 @@ def load_model():
 
 
 def print_sample_information():
-    if print_train_set == True:
+    if print_train_set:
         train_images_path = datasets_folder + "/" + train_folder + "/"
         train_labels_path = datasets_folder + "/" + train_labels_folder + "/"
         print("training set")
         print_set(train_images_path, subfolder, train_labels_path, labels_subfolder)
 
-    if print_validation_set == True:
+    if print_validation_set:
         validation_images_path = datasets_folder + "/" + validation_folder + "/"
         validation_labels_path = datasets_folder + "/" + validation_labels_folder + "/"
         print("validation set")
-        print_set(validation_images_path, subfolder, validation_labels_path, labels_subfolder
-        )
+        print_set(validation_images_path, subfolder, validation_labels_path, labels_subfolder)
 
 def replace_patches(validation_images_path, validation_labels_path, train_images_path, train_labels_path):
         # Remove exiting patches for the images and the labels      
@@ -130,9 +126,7 @@ def replace_patches(validation_images_path, validation_labels_path, train_images
         imageManager.create_patches(validation_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
         imageManager.create_patches(validation_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
     
-### Main function ------------------------------------------------------------------------------------------------------
-
-
+# Main function ------------------------------------------------------------------------------------------------------
 def main():
     try:
         # sys.stdout = open('retrain/retrain_' + datetime.now().strftime('%Y%m%d-%H%M%S') + '.txt', 'w')
@@ -147,11 +141,11 @@ def main():
         # unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
 
         # Set the images and labels paths
-        if use_augmentation == True:
+        if use_augmentation:
             train_images_path = datasets_folder + "/" + augmentation_folder + "/"
             train_labels_path = datasets_folder + "/" + augmentation_labels_folder + "/"
             
-            #Augment data
+            # Augment data
             print("Augmenting data")
             imageManager.augment_data(datasets_folder + "/" + train_folder + "/", subfolder, train_images_path)
             imageManager.augment_data(datasets_folder + "/" + train_labels_folder + "/",labels_subfolder,train_labels_path,)
@@ -171,7 +165,7 @@ def main():
         validation_generator = imageManager.data_generator(validation_images_path, subfolder, validation_labels_path, labels_subfolder, batch_size)
 
         # Get the number of training sample and print it
-        if use_augmentation == True:
+        if use_augmentation:
             full_training_path = (datasets_folder + "/" + augmentation_folder + "/" + subfolder + "/")
         else:
             full_training_path = (datasets_folder + "/" + train_folder + "/" + subfolder + "/")
