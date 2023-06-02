@@ -11,6 +11,9 @@ from unet_model import unet_sym
 from image_manager import ImageManager
 from file_manager import FileManager
 
+import cv2
+import config
+
 ### Set the initial variables ------------------------------------------------------------------------------------------
 
 ## Model to retrain
@@ -83,7 +86,7 @@ def load_model():
     layers_to_retrain = trainable_layers[0:number_layers_to_retrain]
     for layer in initial_model.layers:
         if layer.name in layers_to_retrain:
-            layer.trainable = True
+            set_trainable = True
         else:
             layer.trainable = False
 
@@ -121,12 +124,12 @@ def replace_patches(validation_images_path, validation_labels_path, train_images
         fileManager.remove_patches(validation_labels_path, labels_subfolder)
 
         # Prepare patches for the images and the labels
-        imageManager.create_patches(train_images_path, subfolder, cut_size, gt_size, retrain_with_initial_ratio, retrain_with_new_ratio)
-        imageManager.create_patches(train_labels_path, labels_subfolder, cut_size, gt_size, retrain_with_initial_ratio, retrain_with_new_ratio)
-        imageManager.create_patches(validation_images_path, subfolder, cut_size, gt_size, retrain_with_initial_ratio, retrain_with_new_ratio)
-        imageManager.create_patches(validation_labels_path, labels_subfolder, cut_size, gt_size, retrain_with_initial_ratio, retrain_with_new_ratio)
-
-
+        print('Creating patches new school')
+        imageManager.create_patches(train_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
+        imageManager.create_patches(train_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
+        imageManager.create_patches(validation_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
+        imageManager.create_patches(validation_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
+    
 ### Main function ------------------------------------------------------------------------------------------------------
 
 
@@ -149,9 +152,9 @@ def main():
             train_labels_path = datasets_folder + "/" + augmentation_labels_folder + "/"
             
             #Augment data
+            print("Augmenting data")
             imageManager.augment_data(datasets_folder + "/" + train_folder + "/", subfolder, train_images_path)
             imageManager.augment_data(datasets_folder + "/" + train_labels_folder + "/",labels_subfolder,train_labels_path,)
-            print("training set with augmentation")
             print_set(train_images_path, subfolder, train_labels_path, labels_subfolder)
         else:
             train_images_path = datasets_folder + "/" + train_folder + "/"
@@ -172,7 +175,6 @@ def main():
             full_training_path = (datasets_folder + "/" + augmentation_folder + "/" + subfolder + "/")
         else:
             full_training_path = (datasets_folder + "/" + train_folder + "/" + subfolder + "/")
-
         sample_size = len(fileManager.get_sample(full_training_path, "None"))
         print("training sample size :", sample_size)
 
