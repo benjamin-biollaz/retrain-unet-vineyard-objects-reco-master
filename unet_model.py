@@ -27,6 +27,7 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     merge8 = concatenate([conv2, up8], axis=3)
     up9 = UpSampling2D(size=(3, 3))(merge8)
     up10 = UpSampling2D(size=(2, 2))(up9)
+                #filters #kernel
     conv10 = Conv2D(2, (1, 1), activation='sigmoid', padding='same', kernel_initializer='he_normal')(up10)
 
     model = Model(inputs, conv10)
