@@ -4,6 +4,7 @@ from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import *
 
 from datetime import datetime
+import math
 import traceback
 
 # Project files import
@@ -138,7 +139,7 @@ def main():
 
         # Compile model
         unet_to_retrain.compile(optimizer=Adam(lr=1e-4),loss="binary_crossentropy",metrics=performance_metric,)
-        # unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
+        #unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
 
         # Set the images and labels paths
         if use_augmentation:
@@ -178,8 +179,8 @@ def main():
         print("validation sample size :", val_sample_size)
 
         # Retrain the model with fit
-        unet_to_retrain.fit(training_generator,epochs=epoch,steps_per_epoch=sample_size // batch_size,
-            validation_data=validation_generator,validation_steps=val_sample_size // batch_size,)
+        unet_to_retrain.fit(training_generator,epochs=epoch,steps_per_epoch= math.ceil(sample_size / batch_size),
+            validation_data=validation_generator,validation_steps= math.ceil(val_sample_size / batch_size),)
 
         # Save the weigths of the retrained model
         iteration_name = (weights_path+ "unet_vines_"+ datetime.now().strftime("%Y%m%d-%H%M%S")+ ".hdf5")
