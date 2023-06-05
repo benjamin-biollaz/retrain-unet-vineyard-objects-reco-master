@@ -42,6 +42,9 @@ labels_subfolder = "labels"
 print_train_set = True
 train_folder = "train"
 train_labels_folder = "train_labels"
+train_images_path = datasets_folder + "/" + train_folder + "/"
+train_labels_path = datasets_folder + "/" + train_labels_folder + "/"
+
 
 # Validation dataset
 print_validation_set = True
@@ -102,14 +105,10 @@ def load_model():
 
 def print_sample_information():
     if print_train_set:
-        train_images_path = datasets_folder + "/" + train_folder + "/"
-        train_labels_path = datasets_folder + "/" + train_labels_folder + "/"
         print("training set")
         print_set(train_images_path, subfolder, train_labels_path, labels_subfolder)
 
     if print_validation_set:
-        validation_images_path = datasets_folder + "/" + validation_folder + "/"
-        validation_labels_path = datasets_folder + "/" + validation_labels_folder + "/"
         print("validation set")
         print_set(validation_images_path, subfolder, validation_labels_path, labels_subfolder)
 
@@ -123,35 +122,29 @@ def replace_patches(validation_images_path, validation_labels_path, train_images
         fileManager.remove_patches(validation_labels_path, labels_subfolder)
 
         # Prepare patches for the images and the labels
-        print('Creating patches new school')
+        print('Creating patches')
         imageManager.create_patches(train_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
         imageManager.create_patches(train_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
         imageManager.create_patches(validation_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
         imageManager.create_patches(validation_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
 
 def augment_images():
-    if use_augmentation:
+        # Set paths
+        global train_images_path 
         train_images_path = datasets_folder + "/" + augmentation_folder + "/"
+        global train_labels_path 
         train_labels_path = datasets_folder + "/" + augmentation_labels_folder + "/"
         
         # Augment data
         print("Augmenting data")
         imageManager.augment_data(datasets_folder + "/" + train_folder + "/", subfolder, train_images_path)
         imageManager.augment_data(datasets_folder + "/" + train_labels_folder + "/",labels_subfolder,train_labels_path,)
-        print_set(train_images_path, subfolder, train_labels_path, labels_subfolder)
-    else:
-        train_images_path = datasets_folder + "/" + train_folder + "/"
-        train_labels_path = datasets_folder + "/" + train_labels_folder + "/"
-
    
     
 # Main function ------------------------------------------------------------------------------------------------------
 def main():
     try:
         # sys.stdout = open('retrain/retrain_' + datetime.now().strftime('%Y%m%d-%H%M%S') + '.txt', 'w')
-
-        # Print the number of samples and the 10 first samples
-        print_sample_information()
 
         unet_to_retrain = load_model()
 
@@ -160,7 +153,14 @@ def main():
         #unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
 
         # Handle the data augmentation
-        augment_images()
+        if use_augmentation:
+            augment_images()
+
+        # Print the number of samples and the 10 first samples
+        print_sample_information()
+        
+        # Print training set
+        print_set(train_images_path, subfolder, train_labels_path, labels_subfolder)
 
         # Delete old patches and create new ones
         replace_patches(validation_images_path, validation_labels_path, train_images_path, train_labels_path)
