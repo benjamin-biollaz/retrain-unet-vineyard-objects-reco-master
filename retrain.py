@@ -46,6 +46,8 @@ train_labels_folder = "train_labels"
 print_validation_set = True
 validation_folder = "validation"
 validation_labels_folder = "validation_labels"
+validation_images_path = datasets_folder + "/" + validation_folder + "/"
+validation_labels_path = datasets_folder + "/" + validation_labels_folder + "/"
 
 # Data augmentation settings
 use_augmentation = True
@@ -125,6 +127,22 @@ def replace_patches(validation_images_path, validation_labels_path, train_images
         imageManager.create_patches(train_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
         imageManager.create_patches(validation_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
         imageManager.create_patches(validation_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
+
+def augment_images():
+    if use_augmentation:
+        train_images_path = datasets_folder + "/" + augmentation_folder + "/"
+        train_labels_path = datasets_folder + "/" + augmentation_labels_folder + "/"
+        
+        # Augment data
+        print("Augmenting data")
+        imageManager.augment_data(datasets_folder + "/" + train_folder + "/", subfolder, train_images_path)
+        imageManager.augment_data(datasets_folder + "/" + train_labels_folder + "/",labels_subfolder,train_labels_path,)
+        print_set(train_images_path, subfolder, train_labels_path, labels_subfolder)
+    else:
+        train_images_path = datasets_folder + "/" + train_folder + "/"
+        train_labels_path = datasets_folder + "/" + train_labels_folder + "/"
+
+   
     
 # Main function ------------------------------------------------------------------------------------------------------
 def main():
@@ -140,22 +158,8 @@ def main():
         unet_to_retrain.compile(optimizer=Adam(lr=1e-4),loss="binary_crossentropy",metrics=performance_metric,)
         # unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
 
-        # Set the images and labels paths
-        if use_augmentation:
-            train_images_path = datasets_folder + "/" + augmentation_folder + "/"
-            train_labels_path = datasets_folder + "/" + augmentation_labels_folder + "/"
-            
-            # Augment data
-            print("Augmenting data")
-            imageManager.augment_data(datasets_folder + "/" + train_folder + "/", subfolder, train_images_path)
-            imageManager.augment_data(datasets_folder + "/" + train_labels_folder + "/",labels_subfolder,train_labels_path,)
-            print_set(train_images_path, subfolder, train_labels_path, labels_subfolder)
-        else:
-            train_images_path = datasets_folder + "/" + train_folder + "/"
-            train_labels_path = datasets_folder + "/" + train_labels_folder + "/"
-
-        validation_images_path = datasets_folder + "/" + validation_folder + "/"
-        validation_labels_path = datasets_folder + "/" + validation_labels_folder + "/"
+        # Handle the data augmentation
+        augment_images()
 
         # Delete old patches and create new ones
         replace_patches(validation_images_path, validation_labels_path, train_images_path, train_labels_path)
