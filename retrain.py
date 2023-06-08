@@ -19,9 +19,9 @@ cut_size = 144 #patches size for the detection
 gt_size = 144 # patches size of the labels
 input_size = (cut_size, cut_size, 3)
 weights_path = "Weights/"
-pretrained_weights = "unet_vines.hdf5"
+pretrained_weights = "unet_vines_20230605-113709.hdf5"
 trainable_layers = ["conv2d_7","conv2d_6","conv2d_5","conv2d_4","conv2d_3","conv2d_2","conv2d_1","conv2d",]  
-number_layers_to_retrain = 1  # How many layers are unfrozen
+number_layers_to_retrain = 8  # How many layers are unfrozen
 batch_size = 32
 epoch = 1
 pretrained_resolution = 1.58  # How many cm are covered by a pixel (here GSD)
@@ -85,11 +85,10 @@ def load_model():
     initial_model = unet_sym(pretrained_weights=load_weights, input_size=input_size)
 
     # Freeze the loaded model with pretrained weights
-    set_trainable = False
     layers_to_retrain = trainable_layers[0:number_layers_to_retrain]
     for layer in initial_model.layers:
         if layer.name in layers_to_retrain:
-            set_trainable = True
+            layer.trainable = True
         else:
             layer.trainable = False
 
@@ -149,8 +148,8 @@ def main():
         unet_to_retrain = load_model()
 
         # Compile model
-        unet_to_retrain.compile(optimizer=Adam(lr=1e-4),loss="binary_crossentropy",metrics=performance_metric,)
-        #unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
+        #unet_to_retrain.compile(optimizer=Adam(lr=1e-4),loss="binary_crossentropy",metrics=performance_metric,)
+        unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='sparse_categorical_crossentropy', metrics=performance_metric)
 
         # Handle the data augmentation
         if use_augmentation:
@@ -158,12 +157,9 @@ def main():
 
         # Print the number of samples and the 10 first samples
         print_sample_information()
-        
-        # Print training set
-        print_set(train_images_path, subfolder, train_labels_path, labels_subfolder)
 
         # Delete old patches and create new ones
-        replace_patches(validation_images_path, validation_labels_path, train_images_path, train_labels_path)
+        #replace_patches(validation_images_path, validation_labels_path, train_images_path, train_labels_path)
 
         # Pre-process images and masks
         training_generator = imageManager.data_generator(train_images_path, subfolder, train_labels_path, labels_subfolder, batch_size)

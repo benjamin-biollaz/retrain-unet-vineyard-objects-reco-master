@@ -73,7 +73,7 @@ class ImageManager:
         images = image_generator.flow_from_directory(
             directory=images_path,
             classes=[images_subfolder],
-            class_mode=None,
+            class_mode='categorical',
             color_mode="rgb",
             target_size=(self.cut_size, self.cut_size),
             batch_size=batch_size,
@@ -86,8 +86,8 @@ class ImageManager:
         masks = mask_generator.flow_from_directory(
             directory=labels_path,
             classes=[labels_subfolder],
-            class_mode=None,
-            color_mode="grayscale",
+            class_mode='categorical',
+            color_mode="rgb",
             target_size=(self.gt_size, self.gt_size),
             batch_size=batch_size,
             shuffle=False,
@@ -95,20 +95,27 @@ class ImageManager:
         )
 
         zip_set = zip(images, masks)
+        #return zip_set
 
         for img, msk in zip_set:
             if np.max(img) > 1:
                 img = img / 255
                 msk = msk / 255
-                msk[msk >= 0.5] = int(1)
-                msk[msk < 0.5] = int(0)
-                msk = msk.astype(np.bool)
+                #msk[msk >= 0.5] = int(1)
+                #msk[msk < 0.5] = int(0)
+                #msk = msk.astype(np.bool)
                 label = np.zeros(
-                    (msk.shape[0], (self.gt_size, self.gt_size)[0], (self.gt_size, self.gt_size)[0], 2),
-                    dtype=np.bool,
+                    (msk.shape[0], (self.gt_size, self.gt_size)[0], (self.gt_size, self.gt_size)[0], 3),
+                    dtype=np.uint,
                 )
-                label[:, :, :, 0] = msk[:, :, :, 0] == 1
-                label[:, :, :, 1] = msk[:, :, :, 0] == 0
+                #print("msk[:, :, :, 0]:")
+                #print(msk[:, :, :, 0])
+
+                #label[:, :, :, 0] = msk[:, :, :, 0] == 1
+                #label[:, :, :, 1] = msk[:, :, :, 0] == 0
+                label[:, :, :, 0] = msk[:, :, :, 0]
+                label[:, :, :, 1] = msk[:, :, :, 0]
+
             yield img, label
 
 
@@ -120,6 +127,12 @@ class ImageManager:
             file_name = self.fileManager.get_filename_n_extension(path)[0]
             file_extension = self.fileManager.get_filename_n_extension(path)[1]
             img = cv2.imread(path)
+
+            # Save untempered image
+            cv2.imwrite(
+                augmentation_path + file_name + "_aug-rot-90_" + file_extension,
+                img,
+            )
 
             # Rotation by 90°
             transformation = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
