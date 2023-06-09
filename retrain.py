@@ -149,7 +149,7 @@ def main():
 
         # Compile model
         #unet_to_retrain.compile(optimizer=Adam(lr=1e-4),loss="binary_crossentropy",metrics=performance_metric,)
-        unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='sparse_categorical_crossentropy', metrics=performance_metric)
+        unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
 
         # Handle the data augmentation
         if use_augmentation:

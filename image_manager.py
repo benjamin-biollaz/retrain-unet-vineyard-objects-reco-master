@@ -69,7 +69,6 @@ class ImageManager:
         mask_generator = tf.keras.preprocessing.image.ImageDataGenerator()
 
         print('Generating images')
-
         images = image_generator.flow_from_directory(
             directory=images_path,
             classes=[images_subfolder],
@@ -82,7 +81,6 @@ class ImageManager:
         )
 
         print('Generating masks')
-
         masks = mask_generator.flow_from_directory(
             directory=labels_path,
             classes=[labels_subfolder],
@@ -94,29 +92,30 @@ class ImageManager:
             seed=42,
         )
 
+        palette = np.array(
+            [[100,  100, 100], # White = vine line
+            [84.3,  5.1, 19.6], # Red = roofs
+            [ 0,  0,  0], # Black = other / background
+            ], np.uint8)
+        
         zip_set = zip(images, masks)
-        #return zip_set
-
+      
+        i = 0
         for img, msk in zip_set:
-            if np.max(img) > 1:
-                img = img / 255
-                msk = msk / 255
-                #msk[msk >= 0.5] = int(1)
-                #msk[msk < 0.5] = int(0)
-                #msk = msk.astype(np.bool)
-                label = np.zeros(
-                    (msk.shape[0], (self.gt_size, self.gt_size)[0], (self.gt_size, self.gt_size)[0], 3),
-                    dtype=np.uint,
-                )
-                #print("msk[:, :, :, 0]:")
-                #print(msk[:, :, :, 0])
+                i += 1
+                if (i % 100 == 0):
+                    print("Iteration: " + str(i))
+                mask_encoded = [self.rgb_to_onehot(msk[0][x,:,:,:], palette) for x in range(msk[0].shape[0])]
+        yield img[0], np.asarray(mask_encoded)
+      
 
-                #label[:, :, :, 0] = msk[:, :, :, 0] == 1
-                #label[:, :, :, 1] = msk[:, :, :, 0] == 0
-                label[:, :, :, 0] = msk[:, :, :, 0]
-                label[:, :, :, 1] = msk[:, :, :, 0]
-
-            yield img, label
+    def rgb_to_onehot(self, rgb_image, colormap):
+        num_classes = len(colormap)
+        shape = rgb_image.shape[:2]+(num_classes,)
+        encoded_image = np.zeros(shape, dtype=np.int8)
+        for i, cls in enumerate(colormap):
+            encoded_image[:,:,i] = np.all(rgb_image.reshape((-1,3)) == colormap[i], axis=1).reshape(shape[:2])
+        return encoded_image
 
 
     # Augment images trough roation and flip

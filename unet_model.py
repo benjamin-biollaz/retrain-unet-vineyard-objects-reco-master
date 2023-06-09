@@ -36,11 +36,11 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     model = Model(inputs, conv10)
 
     #model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
-    model.compile(optimizer=Adam(lr=1e-4), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
 
 
-    if pretrained_weights:
-        model.load_weights(pretrained_weights, by_name=True, skip_mismatch=True)
+    #if pretrained_weights:
+     #   model.load_weights(pretrained_weights, by_name=True, skip_mismatch=True)
         #load_weights_by_name(model, pretrained_weights, True)
 
     return model
