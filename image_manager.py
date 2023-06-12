@@ -72,7 +72,7 @@ class ImageManager:
         images = image_generator.flow_from_directory(
             directory=images_path,
             classes=[images_subfolder],
-            class_mode='categorical',
+            class_mode=None,
             color_mode="rgb",
             target_size=(self.cut_size, self.cut_size),
             batch_size=batch_size,
@@ -84,7 +84,7 @@ class ImageManager:
         masks = mask_generator.flow_from_directory(
             directory=labels_path,
             classes=[labels_subfolder],
-            class_mode='categorical',
+            class_mode=None,
             color_mode="rgb",
             target_size=(self.gt_size, self.gt_size),
             batch_size=batch_size,
@@ -92,22 +92,55 @@ class ImageManager:
             seed=42,
         )
 
-        palette = np.array(
-            [[100,  100, 100], # White = vine line
-            [84.3,  5.1, 19.6], # Red = roofs
-            [ 0,  0,  0], # Black = other / background
-            ], np.uint8)
+        palette = {
+            'vine' : (100,  100, 100), # White = vine line
+            'roof' : [84.3,  5.1, 19.6], # Red = roofs
+            'background': [ 0,  0,  0], # Black = other / background
+        }
         
-        zip_set = zip(images, masks)
-      
+        #zip_set = zip(images, masks)
+
+        encoded_mask = []
         i = 0
-        for img, msk in zip_set:
-                i += 1
-                if (i % 100 == 0):
-                    print("Iteration: " + str(i))
-                mask_encoded = [self.rgb_to_onehot(msk[0][x,:,:,:], palette) for x in range(msk[0].shape[0])]
-        yield img[0], np.asarray(mask_encoded)
+        size = len(masks)
+        for msk in masks:
+            #print(msk.shape)
+            print(str(i) + "/" + str(size))
+            encoded_mask.append(self.encode_mask(msk, palette))
+            i += 1  
+          
+            
+        num_classes = len(palette) 
+        one_hot_encoded_mask = tf.keras.utils.to_categorical(encoded_mask, num_classes)
+        print(one_hot_encoded_mask)
+        return zip(images, one_hot_encoded_mask)
+
+
+        #return zip_set
       
+        """i = 0
+    
+        for img, msk in zip_set:
+            i += 1
+
+            label = np.zeros((msk.shape[0], (self.gt_size, self.gt_size)[0], (self.gt_size, self.gt_size)[0], 3), 
+                             dtype=np.uint8)
+            label[:, :, :, 0] = 0
+        yield img, msk"""
+      
+    def encode_mask(self, mask, palette):
+        batch_size, height, width, rgb = mask.shape
+        encoded_mask = np.zeros((height, width), dtype=np.string_)
+        for k in range(batch_size):
+            for i in range(height):
+                for j in range(width):
+                    pixel_color = tuple(mask[k, i, j, :])
+                    for label, color in palette.items():
+                        if pixel_color == color:
+                            encoded_mask[i, j] = label
+                            break
+
+        return encoded_mask
 
     def rgb_to_onehot(self, rgb_image, colormap):
         num_classes = len(colormap)

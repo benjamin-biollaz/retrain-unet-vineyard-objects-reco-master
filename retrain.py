@@ -152,10 +152,14 @@ def main():
         unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
 
         # Handle the data augmentation
-        if use_augmentation:
-            augment_images()
+        #if use_augmentation:
+         #   augment_images()
 
         # Print the number of samples and the 10 first samples
+        global train_images_path 
+        train_images_path = datasets_folder + "/" + augmentation_folder + "/"
+        global train_labels_path 
+        train_labels_path = datasets_folder + "/" + augmentation_labels_folder + "/"
         print_sample_information()
 
         # Delete old patches and create new ones
