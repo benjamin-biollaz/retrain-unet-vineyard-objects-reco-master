@@ -57,8 +57,8 @@ def concat_prediction(predictions, image, cut_size, gt_size, pred_val=0.75):
         
         palette = {
             0 : (255,  255, 255), # White = vine line
-            1 : (215,  14, 50), # Red = roofs
-            2 : (0.0,  0.0,  0.0), # Black = other / background
+            1 : (0.0,  0.0,  0.0), # Black = other / background
+            2 : (215,  14, 50), # Red = roofs
         }
         
         # Create empty array

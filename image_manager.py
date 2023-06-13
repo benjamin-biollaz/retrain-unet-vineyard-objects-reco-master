@@ -34,7 +34,7 @@ class ImageManager:
         return is_tab
 
     # Create patches according to the input size
-    def create_patches(self, files_path, files_subfolder, pretrained_resolution, new_data_resolution,  retrain_with_initial_ratio, retrain_with_new_ratio):
+    def create_patches(self, files_path, files_subfolder, pretrained_resolution, new_data_resolution,  retrain_with_initial_ratio):
         sample_paths = self.fileManager.get_sample(files_path, files_subfolder)
 
         # Each path points to a full-size image
@@ -43,14 +43,14 @@ class ImageManager:
             file_extension = self.fileManager.get_filename_n_extension(path)[1]
             img = cv2.imread(path)
 
-            if retrain_with_initial_ratio and not retrain_with_new_ratio:
+            if retrain_with_initial_ratio:
                 if img.shape[0] < 3000:
                     img_height = img.shape[0]
                     ratio = (config.ORIGINAL_HEIGHT / img_height) + 2
                     cut_size_with_ratio = int(config.CUT_SIZE / ratio)
                     gt_size_with_ratio = int(config.GT_SIZE / ratio)
 
-            if retrain_with_new_ratio:
+            else: 
                 ratio = new_data_resolution/pretrained_resolution
                 cut_size_with_ratio = int(config.CUT_SIZE / ratio)
                 gt_size_with_ratio = int(config.GT_SIZE / ratio)
@@ -95,22 +95,21 @@ class ImageManager:
 
         palette = {
             0 : (255,  255, 255), # White = vine line
-            1 : (215,  14, 50), # Red = roofs
-            2 : (0.0,  0.0,  0.0), # Black = other / background
+            1 : (0.0,  0.0,  0.0), # Black = other / background
+            2 : (215,  14, 50), # Red = roofs
         }
         
         zip_set = zip(images, masks)
       
         for img, msk in zip_set:
-            # Batch size, height, width, n_classes
-            label = np.zeros((msk[0].shape[0], (self.gt_size, self.gt_size)[0], (self.gt_size, self.gt_size)[0], 
-                              len(palette)), dtype=np.uint8)
-            
             batch_size, height, width, rgb = msk[0].shape
 
-            #  Batch contains several masks instances
+            # The label is one hot encoded
+            label = np.zeros((msk[0].shape[0], height, width, len(palette)), dtype=np.uint8)
+
+            # A batch contains several masks instances
             for individual_mask_index in range(batch_size):
-                # One hot encoding
+                # One hot encoding rgb values
                 label[individual_mask_index, :, :, :] = self.encode_mask(msk[0][individual_mask_index], palette)
             yield img, label
       
@@ -130,7 +129,7 @@ class ImageManager:
 
         # pixels with no class are categorised as background
         indexes = np.all(encoded_mask == [0, 0, 0], axis=2)
-        encoded_mask[indexes] = to_categorical(2, len(palette), dtype ="uint8")
+        encoded_mask[indexes] = to_categorical(1, len(palette), dtype ="uint8")
             
         # for i in range(height):
         #      for j in range(width):
@@ -143,17 +142,6 @@ class ImageManager:
         #                 break
 
         return encoded_mask
-
-    def rgb_to_onehot(self, mask, palette):
-        height, width, rgb = mask.shape
-        encoded_mask = np.zeros((height, width, len(palette)), dtype=np.uint8)
-        shape = mask.shape[:2]+(num_classes,)
-        encoded_image = np.zeros(shape, dtype=np.int8)
-        for label, color in palette.items():
-            encoded_mask[:,:,:] = np.all()
-            encoded_mask[:,:,:] = np.all(mask.reshape((-1,3)) == colormap[i], axis=1).reshape(shape[:2])
-        return encoded_image
-
 
     # Augment images trough roation and flip
     def augment_data(self, path, subfolder, augmentation_path):

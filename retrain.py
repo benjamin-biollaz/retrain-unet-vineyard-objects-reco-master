@@ -19,9 +19,9 @@ cut_size = 144 #patches size for the detection
 gt_size = 144 # patches size of the labels
 input_size = (cut_size, cut_size, 3)
 weights_path = "Weights/"
-pretrained_weights = "unet_vines_20230605-113709.hdf5"
+pretrained_weights = "unet_vines.hdf5"
 trainable_layers = ["conv2d_7","conv2d_6","conv2d_5","conv2d_4","conv2d_3","conv2d_2","conv2d_1","conv2d",]  
-number_layers_to_retrain = 8  # How many layers are unfrozen
+number_layers_to_retrain = 4  # How many layers are unfrozen
 batch_size = 32
 epoch = 1
 pretrained_resolution = 1.58  # How many cm are covered by a pixel (here GSD)
@@ -29,9 +29,6 @@ new_data_resolution = 10  # How many cm are covered by a pixel (here GSD)
 retrain_with_initial_ratio = False
 retrain_with_new_ratio = True
 performance_metric = [tf.keras.metrics.Precision()]  # Which metrics for the retraining
-## ['accuracy']
-## [tf.keras.metrics.Precision()]
-## [tf.keras.metrics.Recall()]
 
 ## Datasets
 datasets_folder = "datasets"
@@ -75,9 +72,6 @@ def print_set(image_path, images_subfolder, labels_path, labels_subfolder):
 
 
 def load_model():
-    # Load model without pretrained's weights
-    # no_weigths_model = unet_sym(input_size=input_size)
-    # print(no_weigths_model.summary())
 
     # Load model with pretrained weights
     load_weights = weights_path + pretrained_weights
@@ -94,11 +88,9 @@ def load_model():
 
     # Set the model to retrain
     unet_to_retrain = Model(initial_model.input, initial_model.output)
-    #print(unet_to_retrain.summary())
     for layer in unet_to_retrain.layers:
         print(layer.name," | weights:",len(layer.weights)," | trainable weights:",len(layer.trainable_weights),
             " | non trainable weights:",len(layer.non_trainable_weights)," | trainable layer:",layer.trainable,)
-        # print(layer.weights)
     return unet_to_retrain
 
 
@@ -122,10 +114,10 @@ def replace_patches(validation_images_path, validation_labels_path, train_images
 
         # Prepare patches for the images and the labels
         print('Creating patches')
-        imageManager.create_patches(train_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
-        imageManager.create_patches(train_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
-        imageManager.create_patches(validation_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
-        imageManager.create_patches(validation_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio, retrain_with_new_ratio)
+        imageManager.create_patches(train_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio)
+        imageManager.create_patches(train_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio)
+        imageManager.create_patches(validation_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio)
+        imageManager.create_patches(validation_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio)
 
 def augment_images():
         # Set paths
@@ -138,17 +130,27 @@ def augment_images():
         print("Augmenting data")
         imageManager.augment_data(datasets_folder + "/" + train_folder + "/", subfolder, train_images_path)
         imageManager.augment_data(datasets_folder + "/" + train_labels_folder + "/",labels_subfolder,train_labels_path,)
+
+def print_patches_sample_information():
+        # Get the number of training sample and print it
+        full_training_path = (train_images_path + "/" + subfolder + "/")
+        sample_size = len(fileManager.get_sample(full_training_path, "None"))
+        print("training sample size :", sample_size)
+
+        # Get the number of full validation sample and print it
+        full_validation_path = (datasets_folder + "/" + validation_folder + "/" + subfolder + "/")
+        val_sample_size = len(fileManager.get_sample(full_validation_path, "None"))
+        print("validation sample size :", val_sample_size)
+
+        return sample_size, val_sample_size
    
     
 # Main function ------------------------------------------------------------------------------------------------------
 def main():
     try:
-        # sys.stdout = open('retrain/retrain_' + datetime.now().strftime('%Y%m%d-%H%M%S') + '.txt', 'w')
-
         unet_to_retrain = load_model()
 
         # Compile model
-        #unet_to_retrain.compile(optimizer=Adam(lr=1e-4),loss="binary_crossentropy",metrics=performance_metric,)
         unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
 
         # Handle the data augmentation
@@ -156,7 +158,7 @@ def main():
          #   augment_images()
 
         # Print the number of samples and the 10 first samples
-        global train_images_path 
+        global train_images_path
         train_images_path = datasets_folder + "/" + augmentation_folder + "/"
         global train_labels_path 
         train_labels_path = datasets_folder + "/" + augmentation_labels_folder + "/"
@@ -169,18 +171,7 @@ def main():
         training_generator = imageManager.data_generator(train_images_path, subfolder, train_labels_path, labels_subfolder, batch_size)
         validation_generator = imageManager.data_generator(validation_images_path, subfolder, validation_labels_path, labels_subfolder, batch_size)
 
-        # Get the number of training sample and print it
-        if use_augmentation:
-            full_training_path = (datasets_folder + "/" + augmentation_folder + "/" + subfolder + "/")
-        else:
-            full_training_path = (datasets_folder + "/" + train_folder + "/" + subfolder + "/")
-        sample_size = len(fileManager.get_sample(full_training_path, "None"))
-        print("training sample size :", sample_size)
-
-        # Get the number of full validation sample and print it
-        full_validation_path = (datasets_folder + "/" + validation_folder + "/" + subfolder + "/")
-        val_sample_size = len(fileManager.get_sample(full_validation_path, "None"))
-        print("validation sample size :", val_sample_size)
+        sample_size, val_sample_size = print_patches_sample_information()    
 
         # Retrain the model with fit
         unet_to_retrain.fit(training_generator,epochs=epoch,steps_per_epoch= math.ceil(sample_size / batch_size),
