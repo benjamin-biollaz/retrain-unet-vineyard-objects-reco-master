@@ -2,6 +2,7 @@ import cv2
 import config
 import tensorflow as tf
 import numpy as np
+from tensorflow.keras.utils import to_categorical
 
 from file_manager import FileManager
 
@@ -72,7 +73,7 @@ class ImageManager:
         images = image_generator.flow_from_directory(
             directory=images_path,
             classes=[images_subfolder],
-            class_mode=None,
+           # class_mode=None,
             color_mode="rgb",
             target_size=(self.cut_size, self.cut_size),
             batch_size=batch_size,
@@ -84,7 +85,7 @@ class ImageManager:
         masks = mask_generator.flow_from_directory(
             directory=labels_path,
             classes=[labels_subfolder],
-            class_mode=None,
+           # class_mode=None,
             color_mode="rgb",
             target_size=(self.gt_size, self.gt_size),
             batch_size=batch_size,
@@ -93,61 +94,64 @@ class ImageManager:
         )
 
         palette = {
-            'vine' : (100,  100, 100), # White = vine line
-            'roof' : [84.3,  5.1, 19.6], # Red = roofs
-            'background': [ 0,  0,  0], # Black = other / background
+            0 : (255,  255, 255), # White = vine line
+            1 : (215,  14, 50), # Red = roofs
+            2 : (0.0,  0.0,  0.0), # Black = other / background
         }
         
-        #zip_set = zip(images, masks)
-
-        encoded_mask = []
-        i = 0
-        size = len(masks)
-        for msk in masks:
-            #print(msk.shape)
-            print(str(i) + "/" + str(size))
-            encoded_mask.append(self.encode_mask(msk, palette))
-            i += 1  
-          
-            
-        num_classes = len(palette) 
-        one_hot_encoded_mask = tf.keras.utils.to_categorical(encoded_mask, num_classes)
-        print(one_hot_encoded_mask)
-        return zip(images, one_hot_encoded_mask)
-
-
-        #return zip_set
+        zip_set = zip(images, masks)
       
-        """i = 0
-    
         for img, msk in zip_set:
-            i += 1
+            # Batch size, height, width, n_classes
+            label = np.zeros((msk[0].shape[0], (self.gt_size, self.gt_size)[0], (self.gt_size, self.gt_size)[0], 
+                              len(palette)), dtype=np.uint8)
+            
+            batch_size, height, width, rgb = msk[0].shape
 
-            label = np.zeros((msk.shape[0], (self.gt_size, self.gt_size)[0], (self.gt_size, self.gt_size)[0], 3), 
-                             dtype=np.uint8)
-            label[:, :, :, 0] = 0
-        yield img, msk"""
+            #  Batch contains several masks instances
+            for individual_mask_index in range(batch_size):
+                # One hot encoding
+                label[individual_mask_index, :, :, :] = self.encode_mask(msk[0][individual_mask_index], palette)
+            yield img, label
       
     def encode_mask(self, mask, palette):
-        batch_size, height, width, rgb = mask.shape
-        encoded_mask = np.zeros((height, width), dtype=np.string_)
-        for k in range(batch_size):
-            for i in range(height):
-                for j in range(width):
-                    pixel_color = tuple(mask[k, i, j, :])
-                    for label, color in palette.items():
-                        if pixel_color == color:
-                            encoded_mask[i, j] = label
-                            break
+        height, width, rgb = mask.shape
+        encoded_mask = np.zeros((height, width, len(palette)), dtype=np.uint8)
+
+        for label, color in palette.items():
+            #indexes = mask[:,:] == color
+            #indexes = np.all(mask == color, axis=2)
+            indexes = np.all(np.abs(mask - color) <= 10, axis=2)
+            encoded_mask[indexes] = to_categorical([label], len(palette), dtype ="uint8")
+            
+            # indexes1 = np.all(encoded_mask == [0,1,0])
+            # if (label == 1 and len(encoded_mask[indexes1]) != 0):
+            #     print(encoded_mask[indexes1])
+
+        # pixels with no class are categorised as background
+        indexes = np.all(encoded_mask == [0, 0, 0], axis=2)
+        encoded_mask[indexes] = to_categorical(2, len(palette), dtype ="uint8")
+            
+        # for i in range(height):
+        #      for j in range(width):
+        #          pixel_color = tuple(mask[i, j, :])
+        #          if (pixel_color != (0.0, 0.0, 0.0)):
+        #             print(pixel_color)
+        #         for label, color in palette.items():
+        #             if pixel_color == color:
+        #                 encoded_mask[i, j] = to_categorical([label], len(palette), dtype ="uint8")
+        #                 break
 
         return encoded_mask
 
-    def rgb_to_onehot(self, rgb_image, colormap):
-        num_classes = len(colormap)
-        shape = rgb_image.shape[:2]+(num_classes,)
+    def rgb_to_onehot(self, mask, palette):
+        height, width, rgb = mask.shape
+        encoded_mask = np.zeros((height, width, len(palette)), dtype=np.uint8)
+        shape = mask.shape[:2]+(num_classes,)
         encoded_image = np.zeros(shape, dtype=np.int8)
-        for i, cls in enumerate(colormap):
-            encoded_image[:,:,i] = np.all(rgb_image.reshape((-1,3)) == colormap[i], axis=1).reshape(shape[:2])
+        for label, color in palette.items():
+            encoded_mask[:,:,:] = np.all()
+            encoded_mask[:,:,:] = np.all(mask.reshape((-1,3)) == colormap[i], axis=1).reshape(shape[:2])
         return encoded_image
 
 

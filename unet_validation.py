@@ -15,6 +15,7 @@ import getopt
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+import tensorflow as tf
 from unet_model import *
 from datetime import datetime
 import config
@@ -53,9 +54,39 @@ def concat_prediction(predictions, image, cut_size, gt_size, pred_val=0.75):
             y = 0
         if x + cut_size >= image.shape[1]:
             break
-        item = item[:, :, 0]
-        cp_tmp = np.float32(item*255)
-        cp_tmp = np.uint8(cp_tmp)
+        
+        palette = {
+            0 : (255,  255, 255), # White = vine line
+            1 : (215,  14, 50), # Red = roofs
+            2 : (0.0,  0.0,  0.0), # Black = other / background
+        }
+        
+        height, width, n_classes = item.shape
+
+        # Create empty array
+        decoded_mask = [[0 for x in range(width)] for y in range(height)] 
+
+        # Set the color to the class with the highest probability
+        for i in range(height):
+            for j in range(width):
+                class_probabilities = item[i, j]
+                predicted_class = np.argmax(class_probabilities)
+                class_color = palette[predicted_class]
+                decoded_mask[i][j] = class_color
+
+        # if (i == 100):
+        #     print(item.shape)
+        #     print(item[1, 1, 0])
+        #     print(item[1, 1, 1])
+        #     print(item[1, 1, 2])
+        #     pred_mask = tf.argmax(item, axis=-1)
+        #     pred_mask = pred_mask[..., tf.newaxis]
+        #     print(pred_mask[0])
+
+        ##item = item[:, :, 0]
+        #cp_tmp = np.float32(item*255)
+       
+        cp_tmp = np.uint8(decoded_mask)
         cp_tmp = Image.fromarray(cp_tmp)
         cp_tmp = cp_tmp.resize((gt_size, gt_size))
         test = cv2.cvtColor(np.array(cp_tmp), cv2.COLOR_RGB2BGR)
