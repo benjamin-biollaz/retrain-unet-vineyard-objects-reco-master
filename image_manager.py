@@ -104,7 +104,7 @@ class ImageManager:
         for img, msk in zip_set:
             batch_size, height, width, rgb = msk[0].shape
 
-            # The label is one hot encoded
+            # Creating a 4-dim array of dimensions [batch size, height, width, number of classes]
             label = np.zeros((msk[0].shape[0], height, width, len(palette)), dtype=np.uint8)
 
             # A batch contains several masks instances
@@ -130,16 +130,6 @@ class ImageManager:
         # pixels with no class are categorised as background
         indexes = np.all(encoded_mask == [0, 0, 0], axis=2)
         encoded_mask[indexes] = to_categorical(1, len(palette), dtype ="uint8")
-            
-        # for i in range(height):
-        #      for j in range(width):
-        #          pixel_color = tuple(mask[i, j, :])
-        #          if (pixel_color != (0.0, 0.0, 0.0)):
-        #             print(pixel_color)
-        #         for label, color in palette.items():
-        #             if pixel_color == color:
-        #                 encoded_mask[i, j] = to_categorical([label], len(palette), dtype ="uint8")
-        #                 break
 
         return encoded_mask
 
@@ -154,7 +144,7 @@ class ImageManager:
 
             # Save untempered image
             cv2.imwrite(
-                augmentation_path + file_name + "_aug-rot-90_" + file_extension,
+                augmentation_path + file_name + file_extension,
                 img,
             )
 

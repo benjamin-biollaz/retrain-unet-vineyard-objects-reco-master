@@ -27,7 +27,6 @@ epoch = 1
 pretrained_resolution = 1.58  # How many cm are covered by a pixel (here GSD)
 new_data_resolution = 10  # How many cm are covered by a pixel (here GSD)
 retrain_with_initial_ratio = False
-retrain_with_new_ratio = True
 performance_metric = [tf.keras.metrics.Precision()]  # Which metrics for the retraining
 
 ## Datasets
@@ -155,7 +154,7 @@ def main():
 
         # Handle the data augmentation
         #if use_augmentation:
-         #   augment_images()
+            #augment_images()
 
         # Print the number of samples and the 10 first samples
         global train_images_path

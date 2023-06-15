@@ -63,22 +63,21 @@ def concat_prediction(predictions, image, cut_size, gt_size, pred_val=0.75):
         
         # Create empty array
         height, width, n_classes = item.shape
-        decoded_mask = np.zeros((height, width, 3), dtype=np.uint8)
+        decoded_mask = np.zeros((height, width, len(palette)), dtype=np.uint8)
 
-        # Set the color to the class with the highest probability
-        predicted_classes = np.argmax(item, axis=2)
-        for label, color in palette.items():
-            mask_indices = np.where(predicted_classes == label)
-            decoded_mask[mask_indices] = color
+        # # Set the color to the class with the highest probability
+        # predicted_classes = np.argmax(item, axis=2)
+        # #print(predicted_classes)
+        # for label, color in palette.items():
+        #     mask_indices = np.where(predicted_classes == label)
+        #     decoded_mask[mask_indices] = color
 
-        # for i in range(height):
-        #     for j in range(width):
-        #         class_probabilities = item[i, j]
-        #         predicted_class = np.argmax(class_probabilities)
-        #         if (predicted_class == 2):
-        #             print(class_probabilities)
-        #         class_color = palette.get(predicted_class)
-        #         decoded_mask[i][j] = class_color
+        for i in range(height):
+            for j in range(width):
+                class_probabilities = item[i, j]
+                predicted_class = np.argmax(class_probabilities)
+                class_color = palette.get(predicted_class)
+                decoded_mask[i][j] = class_color
        
         cp_tmp = np.uint8(decoded_mask)
         cp_tmp = Image.fromarray(cp_tmp)
