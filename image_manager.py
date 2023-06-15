@@ -68,7 +68,6 @@ class ImageManager:
         images = image_generator.flow_from_directory(
             directory=images_path,
             classes=[images_subfolder],
-           # class_mode=None,
             color_mode="rgb",
             target_size=(self.cut_size, self.cut_size),
             batch_size=batch_size,
@@ -80,7 +79,6 @@ class ImageManager:
         masks = mask_generator.flow_from_directory(
             directory=labels_path,
             classes=[labels_subfolder],
-           # class_mode=None,
             color_mode="rgb",
             target_size=(self.gt_size, self.gt_size),
             batch_size=batch_size,
@@ -97,9 +95,11 @@ class ImageManager:
         zip_set = zip(images, masks)
       
         for img, msk in zip_set:
-            batch_size, height, width, rgb = msk[0].shape
+            # Normalizing the image colors
+            img = (img[0] / 255, img[1])
 
             # Creating a 4-dim array of dimensions [batch size, height, width, number of classes]
+            batch_size, height, width, rgb = msk[0].shape
             label = np.zeros((msk[0].shape[0], height, width, len(palette)), dtype=np.uint8)
 
             # A batch contains several masks instances
@@ -113,13 +113,8 @@ class ImageManager:
         encoded_mask = np.zeros((height, width, len(palette)), dtype=np.uint8)
 
         for label, color in palette.items():
-            #indexes = np.all(mask == color, axis=2)
             indexes = np.all(np.abs(mask - color) <= 10, axis=2)
             encoded_mask[indexes] = to_categorical([label], len(palette), dtype ="uint8")
-            
-            # indexes1 = np.all(encoded_mask == [0,1,0])
-            # if (label == 1 and len(encoded_mask[indexes1]) != 0):
-            #     print(encoded_mask[indexes1])
 
         # pixels with no class are categorised as background
         indexes = np.all(encoded_mask == [0, 0, 0], axis=2)
