@@ -10,20 +10,24 @@
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import *
+import tensorflow as tf
+from tensorflow.keras import initializers
 
-import h5py
 
 
 # UNET Model : Symetrique
 def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
+    
+    initialiser = tf.keras.initializers.he_normal(seed=1)
+
     inputs = Input(input_size)
-    conv1 = Conv2D(3, (2, 2), activation='relu', padding='valid', kernel_initializer='he_normal', strides=2)(inputs)
-    conv2 = Conv2D(6, (3, 3), activation='relu', padding='valid', kernel_initializer='he_normal', strides=3)(conv1)
-    conv3 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv2)
-    conv4 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv3)
-    conv5 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv4)
-    conv6 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv5)
-    conv7 = Conv2D(24, (5, 5), activation='relu', padding='valid', kernel_initializer='he_normal')(conv6)
+    conv1 = Conv2D(3, (2, 2), activation='relu', padding='valid', kernel_initializer=initialiser, strides=2)(inputs)
+    conv2 = Conv2D(6, (3, 3), activation='relu', padding='valid', kernel_initializer=initialiser, strides=3)(conv1)
+    conv3 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv2)
+    conv4 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv3)
+    conv5 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv4)
+    conv6 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv5)
+    conv7 = Conv2D(24, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv6)
     up7 = UpSampling2D(size=(3, 3))(conv7)
     merge7 = concatenate([conv5, up7], axis=3)
     up8 = UpSampling2D(size=(2, 2))(merge7)
@@ -32,7 +36,7 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     up10 = UpSampling2D(size=(2, 2))(up9)
     
                 #filters #kernel
-    conv10 = Conv2D(3, (1, 1), activation='softmax', padding='same', kernel_initializer='he_normal')(up10)
+    conv10 = Conv2D(3, (1, 1), activation='softmax', padding='same', kernel_initializer=initialiser)(up10)
 
     model = Model(inputs, conv10)
 

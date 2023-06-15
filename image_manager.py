@@ -26,9 +26,6 @@ class ImageManager:
             is_y = 0
             while is_y + cut_size < image.shape[0]: # IMAGE.SHAPE[0] = HAUTEUR
                 is_tab.append(cv2.resize(image[is_y:is_y + cut_size, is_x: is_x + cut_size],(config.CUT_SIZE, config.CUT_SIZE),interpolation=cv2.INTER_AREA))
-                # is_tab.append(image[is_y:is_y + cut_size, is_x: is_x + cut_size])
-                # is_tab.append(cv2.copyMakeBorder(image[is_y:is_y + cut_size, is_x: is_x + cut_size],
-                #                                  pad_left_top, pad, pad_left_top, pad, cv2.BORDER_CONSTANT, value=[0, 0, 0]))
                 is_y += gt_size
             is_x += gt_size
         return is_tab
@@ -56,12 +53,10 @@ class ImageManager:
                 gt_size_with_ratio = int(config.GT_SIZE / ratio)
 
             patches = self.image_splitting(img, cut_size_with_ratio, gt_size_with_ratio)
-            # print(len(patches))
             i = 1
             for patch in patches:
                 cv2.imwrite(files_path + files_subfolder + '/' + file_name + '_patch_' + str(i) + file_extension, patch)
                 i += 1
-                # print(len(patch))
 
     # Pre-processing for mask and images
     def data_generator(self, images_path, images_subfolder, labels_path, labels_subfolder, batch_size):
@@ -94,9 +89,9 @@ class ImageManager:
         )
 
         palette = {
-            0 : (255,  255, 255), # White = vine line
+            0 : (215,  14, 50), # Red = roofs
             1 : (0.0,  0.0,  0.0), # Black = other / background
-            2 : (215,  14, 50), # Red = roofs
+            2 : (255,  255, 255), # White = vine line 
         }
         
         zip_set = zip(images, masks)
@@ -118,7 +113,6 @@ class ImageManager:
         encoded_mask = np.zeros((height, width, len(palette)), dtype=np.uint8)
 
         for label, color in palette.items():
-            #indexes = mask[:,:] == color
             #indexes = np.all(mask == color, axis=2)
             indexes = np.all(np.abs(mask - color) <= 10, axis=2)
             encoded_mask[indexes] = to_categorical([label], len(palette), dtype ="uint8")
