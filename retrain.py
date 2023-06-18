@@ -21,9 +21,9 @@ input_size = (cut_size, cut_size, 3)
 weights_path = "Weights/"
 pretrained_weights = "unet_vines.hdf5"
 trainable_layers = ["conv2d_7","conv2d_6","conv2d_5","conv2d_4","conv2d_3","conv2d_2","conv2d_1","conv2d",]  
-number_layers_to_retrain = 3  # How many layers are unfrozen
+number_layers_to_retrain = 8  # How many layers are unfrozen
 batch_size = 32
-epoch = 1
+epoch = 5
 pretrained_resolution = 1.58  # How many cm are covered by a pixel (here GSD)
 new_data_resolution = 10  # How many cm are covered by a pixel (here GSD)
 retrain_with_initial_ratio = False
@@ -153,18 +153,18 @@ def main():
         unet_to_retrain.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=performance_metric)
 
         # Handle the data augmentation
-        #if use_augmentation:
-            #augment_images()
+        if use_augmentation:
+            augment_images()
 
         # Print the number of samples and the 10 first samples
-        global train_images_path
-        train_images_path = datasets_folder + "/" + augmentation_folder + "/"
-        global train_labels_path 
-        train_labels_path = datasets_folder + "/" + augmentation_labels_folder + "/"
+        # global train_images_path
+        # train_images_path = datasets_folder + "/" + augmentation_folder + "/"
+        # global train_labels_path 
+        # train_labels_path = datasets_folder + "/" + augmentation_labels_folder + "/"
         print_sample_information()
 
         # Delete old patches and create new ones
-        #replace_patches(validation_images_path, validation_labels_path, train_images_path, train_labels_path)
+        replace_patches(validation_images_path, validation_labels_path, train_images_path, train_labels_path)
 
         # Pre-process images and masks
         training_generator = imageManager.data_generator(train_images_path, subfolder, train_labels_path, labels_subfolder, batch_size)

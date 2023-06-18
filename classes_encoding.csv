@@ -1,0 +1,4 @@
+class_name, label, r, g, b
+Roof,0,215,14,50
+Other,1,0,0,0
+Vine,2,255,255,255

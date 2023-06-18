@@ -86,11 +86,8 @@ class ImageManager:
             seed=42,
         )
 
-        palette = {
-            0 : (215,  14, 50), # Red = roofs
-            1 : (0.0,  0.0,  0.0), # Black = other / background
-            2 : (255,  255, 255), # White = vine line 
-        }
+        # class_encoding
+        class_encoding = FileManager.get_classes_encoding()
         
         zip_set = zip(images, masks)
       
@@ -100,25 +97,26 @@ class ImageManager:
 
             # Creating a 4-dim array of dimensions [batch size, height, width, number of classes]
             batch_size, height, width, rgb = msk[0].shape
-            label = np.zeros((msk[0].shape[0], height, width, len(palette)), dtype=np.uint8)
+            label = np.zeros((msk[0].shape[0], height, width, len(class_encoding)), dtype=np.uint8)
 
             # A batch contains several masks instances
             for individual_mask_index in range(batch_size):
                 # One hot encoding rgb values
-                label[individual_mask_index, :, :, :] = self.encode_mask(msk[0][individual_mask_index], palette)
+                label[individual_mask_index, :, :, :] = self.encode_mask(msk[0][individual_mask_index], class_encoding)
             yield img, label
       
-    def encode_mask(self, mask, palette):
+    def encode_mask(self, mask, class_encoding):
         height, width, rgb = mask.shape
-        encoded_mask = np.zeros((height, width, len(palette)), dtype=np.uint8)
+        encoded_mask = np.zeros((height, width, len(class_encoding)), dtype=np.uint8)
 
-        for label, color in palette.items():
+        for  name, label, color in class_encoding:
             indexes = np.all(np.abs(mask - color) <= 10, axis=2)
-            encoded_mask[indexes] = to_categorical([label], len(palette), dtype ="uint8")
+            #indexes = np.all(mask == color, axis=2)
+            encoded_mask[indexes] = to_categorical([label], len(class_encoding), dtype ="uint8")
 
         # pixels with no class are categorised as background
         indexes = np.all(encoded_mask == [0, 0, 0], axis=2)
-        encoded_mask[indexes] = to_categorical(1, len(palette), dtype ="uint8")
+        encoded_mask[indexes] = to_categorical(1, len(class_encoding), dtype ="uint8")
 
         return encoded_mask
 

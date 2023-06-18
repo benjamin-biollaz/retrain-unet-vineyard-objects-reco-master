@@ -19,7 +19,13 @@ import tensorflow as tf
 from unet_model import *
 from datetime import datetime
 import config
+from sklearn.metrics import classification_report, confusion_matrix
+from tensorflow.keras.utils import to_categorical
+from file_manager import FileManager
+
 from image_manager import ImageManager
+
+class_encoding = FileManager.get_classes_encoding()
 
 
 # Recuperation des filenames et file_extension
@@ -55,19 +61,13 @@ def concat_prediction(predictions, image, cut_size, gt_size, pred_val=0.75):
         if x + cut_size >= image.shape[1]:
             break
         
-        palette = {
-            0 : (215,  14, 50), # Red = roofs
-            1 : (0.0,  0.0,  0.0), # Black = other / background
-            2 : (255,  255, 255), # White = vine line 
-        }
-        
         # Create empty array
         height, width, n_classes = item.shape
         decoded_mask = np.zeros((height, width, n_classes), dtype=np.uint8)
 
         # Set the color to the class with the highest probability
         predicted_classes = np.argmax(item, axis=2)
-        for label, color in palette.items():
+        for name, label, color in class_encoding:
             mask_indices = np.where(predicted_classes == label)
             decoded_mask[mask_indices] = color
        
@@ -84,40 +84,70 @@ def concat_prediction(predictions, image, cut_size, gt_size, pred_val=0.75):
 
 
 def calcul_accuracy(results, filename, extension):
+
     ca_mask = cv2.imread("datasets/test_labels/" + filename + extension)
+
+    # Convert the image since CV2 encodes color in BGR
+    ca_mask = cv2.cvtColor(ca_mask, cv2.COLOR_BGR2RGB)
+
+    # Normalize colors
     ca_mask = np.asarray(ca_mask) / 255
     results = np.asarray(results) / 255
-    ca_mask = ca_mask[:, :, 0]
-    results = results[:, :, 0]
 
-    intersection = np.logical_and(ca_mask, results)
-    union = np.logical_or(ca_mask, results)
+    total_precision, total_recall, total_f1, total_IOU = 0, 0, 0, 0
 
-    true_pos = np.sum(intersection)
+    for name, label, color in class_encoding:
+        color = np.asarray(color) / 255
 
-    false_pos = np.logical_xor(intersection, results)
-    false_pos = np.sum(false_pos)
+        # One versus all
+        one_vs_all_mask_indices = np.all(ca_mask == color, axis=2)
+        one_vs_all_predictions_indices = np.all(results == color, axis=2)
 
-    false_neg = np.logical_xor(intersection, ca_mask)
-    false_neg = np.sum(false_neg)
+        # The class is assigned 1 and other pixels are assigned 0
+        mask_class_vs_all = np.zeros((ca_mask.shape[0], ca_mask.shape[1]), dtype=np.uint8)
+        pred_class_vs_all = np.zeros((results.shape[0], results.shape[1]), dtype=np.uint8)
+        mask_class_vs_all[one_vs_all_mask_indices] = 1
+        pred_class_vs_all[one_vs_all_predictions_indices] = 1
 
-    true_neg = (ca_mask.shape[0] * ca_mask.shape[1]) - (true_pos + false_pos + false_neg)
+        intersection = np.logical_and(mask_class_vs_all, pred_class_vs_all)
+        union = np.logical_or(mask_class_vs_all, pred_class_vs_all)
 
-    total = ca_mask.shape[0] * ca_mask.shape[1]
+        # Confusion matrix
+        true_pos = np.sum(intersection)
+        false_pos = np.logical_xor(intersection, pred_class_vs_all)
+        false_pos = np.sum(false_pos)
+        false_neg = np.logical_xor(intersection, mask_class_vs_all)
+        false_neg = np.sum(false_neg)
+        true_neg = (ca_mask.shape[0] * ca_mask.shape[1]) - (true_pos + false_pos + false_neg)
 
-    print("\n-----------------------------------")
-    print("TP =", true_pos, "TN =", true_neg)
-    print("FP =", false_pos, "FN =", false_neg)
+        total = ca_mask.shape[0] * ca_mask.shape[1]
+
+        # Calculate metrics
+        precision = true_pos / (true_pos + false_pos)
+        recall = true_pos / (true_pos + false_neg)
+        f1 = 2*(precision * recall) / (precision + recall)
+        IOU = np.sum(intersection) / np.sum(union)
+
+        print("-----------------------------------")
+        print(name)
+        print("Precision =", precision, "|Recall =", recall, "F1 =", f1)
+        print("Pixel Accuracy =", (true_pos + true_neg) / total)
+        print("IoU =", IOU)
+
+        # Add the class values to the total values
+        total_precision += precision
+        total_recall += recall
+        total_f1 += f1
+        total_IOU += IOU
+
+    n_classes = len(class_encoding)
     print("-----------------------------------")
-    print("Max pixels =", total)
-    precision = true_pos / (true_pos + false_pos)
-    recall = true_pos / (true_pos + false_neg)
-    print("-----------------------------------")
-    print("Pixel Accuracy =", (true_pos + true_neg) / total)
-    print("Precision =", precision)
-    print("Recall =", recall)
-    print("IoU =", np.sum(intersection) / np.sum(union))
-    print("F1 score =", 2*(precision * recall) / (precision + recall))
+    print("Average values: ")
+    print("Average precision: ", total_precision/n_classes)
+    print("Average recall: ", total_recall/n_classes)
+    print("Average f1: ", total_f1/n_classes)
+    print("Average IOU: ", total_IOU/n_classes)
+
 
 
 def adaptive_histogram_equalization_rgb(image: [], grid_size=50):

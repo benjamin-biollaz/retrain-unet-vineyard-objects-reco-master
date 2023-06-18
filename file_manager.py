@@ -1,4 +1,5 @@
 import os
+import csv
 
 class FileManager:
 
@@ -28,3 +29,19 @@ class FileManager:
             os.remove(path)
 
         print('Successful patches removal from ' + files_path + files_subfolder + ' !')
+
+    def get_classes_encoding():
+        with open('classes_encoding.csv', newline='') as csvfile:
+            data = list(csv.reader(csvfile, delimiter=","))
+            palette = [ [ None for y in range(3) ] for x in range( len(data) - 1) ]
+            for i in range(len(data)):
+                # Fist line corresponds to the csv column labels
+                if (i == 0):
+                    continue
+                paletteIndex = i-1
+                palette[paletteIndex][0] = data[i][0] # Name
+                palette[paletteIndex][1] = int(data[i][1]) # Label
+                # RGB value
+                palette[paletteIndex][2] = (float(data[i][2]), float(data[i][3]), float(data[i][4]))
+            
+            return palette
