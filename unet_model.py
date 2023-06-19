@@ -12,8 +12,10 @@ from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import *
 import tensorflow as tf
 from tensorflow.keras import initializers
+from file_manager import FileManager
 
-
+class_encoding = FileManager.get_classes_encoding()
+nb_classes = len(class_encoding)
 
 # UNET Model : Symetrique
 def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
@@ -35,8 +37,8 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     up9 = UpSampling2D(size=(3, 3))(merge8)
     up10 = UpSampling2D(size=(2, 2))(up9)
     
-                #filters #kernel
-    conv10 = Conv2D(3, (1, 1), activation='softmax', padding='same', kernel_initializer=initialiser)(up10)
+
+    conv10 = Conv2D(nb_classes, (1, 1), activation='softmax', padding='same', kernel_initializer=initialiser)(up10)
 
     model = Model(inputs, conv10)
 
