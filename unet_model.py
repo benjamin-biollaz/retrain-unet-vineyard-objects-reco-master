@@ -37,7 +37,6 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     up9 = UpSampling2D(size=(3, 3))(merge8)
     up10 = UpSampling2D(size=(2, 2))(up9)
     
-
     conv10 = Conv2D(nb_classes, (1, 1), activation='softmax', padding='same', kernel_initializer=initialiser)(up10)
 
     model = Model(inputs, conv10)
