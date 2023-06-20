@@ -20,7 +20,7 @@ nb_classes = len(class_encoding)
 # UNET Model : Symetrique
 def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     
-    initialiser = tf.keras.initializers.he_normal(seed=1)
+    initialiser = tf.keras.initializers.he_normal()
 
     inputs = Input(input_size)
     conv1 = Conv2D(3, (2, 2), activation='relu', padding='valid', kernel_initializer=initialiser, strides=2)(inputs)

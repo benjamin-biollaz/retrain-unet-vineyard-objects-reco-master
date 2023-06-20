@@ -100,7 +100,8 @@ def calcul_accuracy(results, filename, extension):
         color = np.asarray(color) / 255
 
         # One versus all
-        one_vs_all_mask_indices = np.all(ca_mask == color, axis=2)
+        #one_vs_all_mask_indices = np.all(ca_mask == color, axis=2)
+        one_vs_all_mask_indices = np.all(np.abs(ca_mask - color) <= (10/255), axis=2)
         one_vs_all_predictions_indices = np.all(results == color, axis=2)
 
         # The class is assigned 1 and other pixels are assigned 0
@@ -140,13 +141,38 @@ def calcul_accuracy(results, filename, extension):
         total_f1 += f1
         total_IOU += IOU
 
-    n_classes = len(class_encoding)
+    # n_classes = len(class_encoding)
+    # print("-----------------------------------")
+    # print("Average values: ")
+    # print("Average precision: ", total_precision/n_classes)
+    # print("Average recall: ", total_recall/n_classes)
+    # print("Average f1: ", total_f1/n_classes)
+    # print("Average IOU: ", total_IOU/n_classes)
+    intersection = np.logical_and(ca_mask, results)
+    union = np.logical_or(ca_mask, results)
+
+    true_pos = np.sum(intersection)
+
+    false_pos = np.logical_xor(intersection, results)
+    false_pos = np.sum(false_pos)
+
+    false_neg = np.logical_xor(intersection, ca_mask)
+    false_neg = np.sum(false_neg)
+
+    true_neg = (ca_mask.shape[0] * ca_mask.shape[1]) - (true_pos + false_pos + false_neg)
+
+    total = ca_mask.shape[0] * ca_mask.shape[1]
+
     print("-----------------------------------")
     print("Average values: ")
-    print("Average precision: ", total_precision/n_classes)
-    print("Average recall: ", total_recall/n_classes)
-    print("Average f1: ", total_f1/n_classes)
-    print("Average IOU: ", total_IOU/n_classes)
+    precision = true_pos / (true_pos + false_pos)
+    recall = true_pos / (true_pos + false_neg)
+    print("Pixel Accuracy =", (true_pos + true_neg) / total)
+    print("Precision =", precision)
+    print("Recall =", recall)
+    print("IoU =", np.sum(intersection) / np.sum(union))
+    print("F1 score =", 2*(precision * recall) / (precision + recall))
+
 
 
 

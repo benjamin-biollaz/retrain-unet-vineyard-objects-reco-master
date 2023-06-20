@@ -110,8 +110,8 @@ class ImageManager:
         encoded_mask = np.zeros((height, width, len(class_encoding)), dtype=np.uint8)
 
         for  name, label, color in class_encoding:
-            indexes = np.all(np.abs(mask - color) <= 10, axis=2)
             #indexes = np.all(mask == color, axis=2)
+            indexes = np.all(np.abs(mask - color) <= 10, axis=2)
             encoded_mask[indexes] = to_categorical([label], len(class_encoding), dtype ="uint8")
 
         # pixels with no class are categorised as background
@@ -135,26 +135,54 @@ class ImageManager:
                 img,
             )
 
-            # Rotation by 90°
-            transformation = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-            cv2.imwrite(
-                augmentation_path + file_name + "_aug-rot-90_" + file_extension,
-                transformation,
-            )
+            # Rotation each 10°
+            # degrees = []
+            # for i in range (0, 440, 10):
+            #     degrees.append(i)
 
-            # Rotation by 180°
-            transformation = cv2.rotate(img, cv2.ROTATE_180)
-            cv2.imwrite(
-                augmentation_path + file_name + "_aug-rot-180_" + file_extension,
-                transformation,
-            )
+            # numberOfAppearance = [0] * 46
 
-            # Rotation by 270°
-            transformation = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            cv2.imwrite(
-                augmentation_path + file_name + "_aug-rot-270_" + file_extension,
-                transformation,
-            )
+            for i in range (10, 360, 10):
+                height, width = img.shape[0], img.shape[1]
+                rotation_matrix = cv2.getRotationMatrix2D((height/2, width/2), i,1) 
+                image_each_ten_degree = cv2.warpAffine(img, rotation_matrix, (height,width))
+                # img_plus_90 = cv2.rotate(image_each_ten_degree, cv2.ROTATE_90_CLOCKWISE)
+                # img_minus_90 = cv2.rotate(image_each_ten_degree, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+                # if ((i + 90) > 360):
+                #     numberOfAppearance[abs(i+90-360) // 10] += 1    
+                # numberOfAppearance[((i+90) // 10)] += 1
+                # numberOfAppearance[(i-90) // 10] += 1
+
+                cv2.imwrite(augmentation_path + file_name + "_aug-rot- " + str(i)  + file_extension,
+                image_each_ten_degree,)
+
+            #     cv2.imwrite(augmentation_path + file_name + "_aug-rot- " + str(i - 90)  + file_extension,
+            #     img_minus_90,)
+            
+            # print(degrees)
+            # print(numberOfAppearance)
+
+            # # Rotation by 90°
+            # transformation = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+            # cv2.imwrite(
+            #     augmentation_path + file_name + "_aug-rot-90_" + file_extension,
+            #     transformation,
+            # )
+
+            # # Rotation by 180°
+            # transformation = cv2.rotate(img, cv2.ROTATE_180)
+            # cv2.imwrite(
+            #     augmentation_path + file_name + "_aug-rot-180_" + file_extension,
+            #     transformation,
+            # )
+
+            # # Rotation by 270°
+            # transformation = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            # cv2.imwrite(
+            #     augmentation_path + file_name + "_aug-rot-270_" + file_extension,
+            #     transformation,
+            # )
 
             # Vertical flip
             transformation = cv2.flip(img, 0)
@@ -167,5 +195,12 @@ class ImageManager:
             transformation = cv2.flip(img, 1)
             cv2.imwrite(
                 augmentation_path + file_name + "_aug-flip-hor_" + file_extension,
+                transformation,
+            )
+
+            #vertical and horizaontal flipping
+            transformation = cv2.flip(img, -1) 
+            cv2.imwrite(
+                augmentation_path + file_name + "_aug-flip-hor_ver" + file_extension,
                 transformation,
             )
