@@ -135,25 +135,11 @@ class ImageManager:
                 img,
             )
 
-            # Rotation each 10°
-            # degrees = []
-            # for i in range (0, 440, 10):
-            #     degrees.append(i)
-
-            # numberOfAppearance = [0] * 46
-
             for i in range (10, 360, 10):
                 height, width = img.shape[0], img.shape[1]
                 rotation_matrix = cv2.getRotationMatrix2D((height/2, width/2), i,1) 
                 image_each_ten_degree = cv2.warpAffine(img, rotation_matrix, (height,width))
-                # img_plus_90 = cv2.rotate(image_each_ten_degree, cv2.ROTATE_90_CLOCKWISE)
-                # img_minus_90 = cv2.rotate(image_each_ten_degree, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-                # if ((i + 90) > 360):
-                #     numberOfAppearance[abs(i+90-360) // 10] += 1    
-                # numberOfAppearance[((i+90) // 10)] += 1
-                # numberOfAppearance[(i-90) // 10] += 1
-
+                
                 cv2.imwrite(augmentation_path + file_name + "_aug-rot- " + str(i)  + file_extension,
                 image_each_ten_degree,)
 
