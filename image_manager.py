@@ -139,15 +139,9 @@ class ImageManager:
                 height, width = img.shape[0], img.shape[1]
                 rotation_matrix = cv2.getRotationMatrix2D((height/2, width/2), i,1) 
                 image_each_ten_degree = cv2.warpAffine(img, rotation_matrix, (height,width))
-                
+
                 cv2.imwrite(augmentation_path + file_name + "_aug-rot- " + str(i)  + file_extension,
                 image_each_ten_degree,)
-
-            #     cv2.imwrite(augmentation_path + file_name + "_aug-rot- " + str(i - 90)  + file_extension,
-            #     img_minus_90,)
-            
-            # print(degrees)
-            # print(numberOfAppearance)
 
             # # Rotation by 90°
             # transformation = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
