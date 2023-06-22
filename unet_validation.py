@@ -19,7 +19,6 @@ import tensorflow as tf
 from unet_model import *
 from datetime import datetime
 import config
-from sklearn.metrics import classification_report, confusion_matrix
 from tensorflow.keras.utils import to_categorical
 from file_manager import FileManager
 
@@ -94,8 +93,6 @@ def calcul_accuracy(results, filename, extension):
     ca_mask = np.asarray(ca_mask) / 255
     results = np.asarray(results) / 255
 
-    total_precision, total_recall, total_f1, total_IOU = 0, 0, 0, 0
-
     for name, label, color in class_encoding:
         color = np.asarray(color) / 255
 
@@ -135,19 +132,7 @@ def calcul_accuracy(results, filename, extension):
         print("Pixel Accuracy =", (true_pos + true_neg) / total)
         print("IoU =", IOU)
 
-        # Add the class values to the total values
-        total_precision += precision
-        total_recall += recall
-        total_f1 += f1
-        total_IOU += IOU
-
-    # n_classes = len(class_encoding)
-    # print("-----------------------------------")
-    # print("Average values: ")
-    # print("Average precision: ", total_precision/n_classes)
-    # print("Average recall: ", total_recall/n_classes)
-    # print("Average f1: ", total_f1/n_classes)
-    # print("Average IOU: ", total_IOU/n_classes)
+    # Calculate average values
     intersection = np.logical_and(ca_mask, results)
     union = np.logical_or(ca_mask, results)
 

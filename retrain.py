@@ -21,7 +21,7 @@ input_size = (cut_size, cut_size, 3)
 weights_path = "Weights/"
 pretrained_weights = "unet_vines.hdf5"
 trainable_layers = ["conv2d_7","conv2d_6","conv2d_5","conv2d_4","conv2d_3","conv2d_2","conv2d_1","conv2d",]  
-number_layers_to_retrain = 8  # How many layers are unfrozen
+number_layers_to_retrain = 1  # How many layers are unfrozen
 batch_size = 32
 epoch = 5
 pretrained_resolution = 1.58  # How many cm are covered by a pixel (here GSD)
@@ -114,7 +114,9 @@ def replace_patches(validation_images_path, validation_labels_path, train_images
         # Prepare patches for the images and the labels
         print('Creating patches')
         imageManager.create_patches(train_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio)
+        print("Images patches finished")
         imageManager.create_patches(train_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio)
+        print("Labels patches finished")
         imageManager.create_patches(validation_images_path, subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio)
         imageManager.create_patches(validation_labels_path, labels_subfolder, pretrained_resolution, new_data_resolution, retrain_with_initial_ratio)
 
