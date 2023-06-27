@@ -135,34 +135,64 @@ class ImageManager:
                 img,
             )
 
+            # Rotation by 90°
+            transformation = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+            cv2.imwrite(
+                augmentation_path + file_name + "_aug-rot-90_" + file_extension,
+                transformation,
+            )
+
+            # Rotation by 180°
+            transformation = cv2.rotate(img, cv2.ROTATE_180)
+            cv2.imwrite(
+                augmentation_path + file_name + "_aug-rot-180_" + file_extension,
+                transformation,
+            )
+
+            # Rotation by 270°
+            transformation = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            cv2.imwrite(
+                augmentation_path + file_name + "_aug-rot-270_" + file_extension,
+                transformation,
+            )
+
+            # Vertical flip
+            transformation = cv2.flip(img, 0)
+            cv2.imwrite(
+                augmentation_path + file_name + "_aug-flip-ver_" + file_extension,
+                transformation,
+            )
+
+            # horizontal flip
+            transformation = cv2.flip(img, 1)
+            cv2.imwrite(
+                augmentation_path + file_name + "_aug-flip-hor_" + file_extension,
+                transformation,
+            )
+
+     # Augment images trough roation and flip
+    def augment_data_rotation_each_10(self, path, subfolder, augmentation_path):
+        images_paths = self.fileManager.get_sample(path, subfolder)
+
+        for path in images_paths:
+            file_name = self.fileManager.get_filename_n_extension(path)[0]
+            file_extension = self.fileManager.get_filename_n_extension(path)[1]
+            img = cv2.imread(path)
+
+            # Save untempered image
+            cv2.imwrite(
+                augmentation_path + file_name + file_extension,
+                img,
+            )
+
+            # Rotation each 10 degree
             for i in range (10, 360, 10):
                 height, width = img.shape[0], img.shape[1]
                 rotation_matrix = cv2.getRotationMatrix2D((height/2, width/2), i,1) 
                 image_each_ten_degree = cv2.warpAffine(img, rotation_matrix, (height,width))
 
                 cv2.imwrite(augmentation_path + file_name + "_aug-rot- " + str(i)  + file_extension,
-                image_each_ten_degree,)
-
-            # # Rotation by 90°
-            # transformation = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-            # cv2.imwrite(
-            #     augmentation_path + file_name + "_aug-rot-90_" + file_extension,
-            #     transformation,
-            # )
-
-            # # Rotation by 180°
-            # transformation = cv2.rotate(img, cv2.ROTATE_180)
-            # cv2.imwrite(
-            #     augmentation_path + file_name + "_aug-rot-180_" + file_extension,
-            #     transformation,
-            # )
-
-            # # Rotation by 270°
-            # transformation = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            # cv2.imwrite(
-            #     augmentation_path + file_name + "_aug-rot-270_" + file_extension,
-            #     transformation,
-            # )
+                image_each_ten_degree,)   
 
             # Vertical flip
             transformation = cv2.flip(img, 0)
