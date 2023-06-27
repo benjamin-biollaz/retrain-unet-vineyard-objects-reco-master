@@ -14,26 +14,14 @@ import cv2
 import getopt
 import numpy as np
 from PIL import Image
-import matplotlib.pyplot as plt
-import tensorflow as tf
 from unet_model import *
 from datetime import datetime
 import config
-from tensorflow.keras.utils import to_categorical
-from file_manager import FileManager
 
+from file_manager import FileManager
 from image_manager import ImageManager
 
 class_encoding = FileManager.get_classes_encoding()
-
-
-# Recuperation des filenames et file_extension
-def get_filename_n_extension(path):
-    gfe_split_name = path.split(os.path.sep)
-    gfe_file = gfe_split_name[-1]
-    gfe_filename = gfe_file.split(".")[0].split('/')[-1]
-    gfe_ext = "." + gfe_file.split(".")[1]
-    return gfe_filename, gfe_ext
 
 # Formatage de la liste cree par image_splitting
 def val_generator(img_lst):
@@ -240,7 +228,7 @@ def main(argv):
     if not os.path.isdir(result_dir):
         os.mkdir(result_dir)
     input_size = (cut_size, cut_size, 3)
-    filename, extension = get_filename_n_extension(file)
+    filename, extension = FileManager.get_filename_n_extension(self=None, path=file)
     image = cv2.imread(file)
     if hist:
         image = adaptive_histogram_equalization_rgb(image)
