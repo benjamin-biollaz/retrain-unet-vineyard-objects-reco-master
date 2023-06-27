@@ -97,14 +97,14 @@ def calcul_accuracy(results, filename, extension):
         color = np.asarray(color) / 255
 
         # One versus all
-        one_vs_all_mask_indices = np.all(ca_mask == color, axis=2)
-        one_vs_all_predictions_indices = np.all(results == color, axis=2)
+        mask_class_indices = np.all(ca_mask == color, axis=2)
+        prediction_class_indices = np.all(results == color, axis=2)
 
         # The class is assigned 1 and other pixels are assigned 0
         mask_class_vs_all = np.zeros((ca_mask.shape[0], ca_mask.shape[1]), dtype=np.uint8)
         pred_class_vs_all = np.zeros((results.shape[0], results.shape[1]), dtype=np.uint8)
-        mask_class_vs_all[one_vs_all_mask_indices] = 1
-        pred_class_vs_all[one_vs_all_predictions_indices] = 1
+        mask_class_vs_all[mask_class_indices] = 1
+        pred_class_vs_all[prediction_class_indices] = 1
 
         intersection = np.logical_and(mask_class_vs_all, pred_class_vs_all)
         union = np.logical_or(mask_class_vs_all, pred_class_vs_all)
