@@ -97,8 +97,7 @@ def calcul_accuracy(results, filename, extension):
         color = np.asarray(color) / 255
 
         # One versus all
-        #one_vs_all_mask_indices = np.all(ca_mask == color, axis=2)
-        one_vs_all_mask_indices = np.all(np.abs(ca_mask - color) <= (10/255), axis=2)
+        one_vs_all_mask_indices = np.all(ca_mask == color, axis=2)
         one_vs_all_predictions_indices = np.all(results == color, axis=2)
 
         # The class is assigned 1 and other pixels are assigned 0
