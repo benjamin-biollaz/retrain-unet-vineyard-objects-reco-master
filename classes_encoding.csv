@@ -1,4 +1,4 @@
 class_name, label, r, g, b
-Roof,0,215,14,50
+Vine,0,255,255,255
 Other,1,0,0,0
-Vine,2,255,255,255
+Roof,2,215,14,50

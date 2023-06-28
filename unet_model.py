@@ -20,16 +20,16 @@ nb_classes = len(class_encoding)
 # UNET Model : Symetrique
 def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     
-    initialiser = tf.keras.initializers.he_normal()
+    initializer = tf.keras.initializers.he_normal()
 
     inputs = Input(input_size)
-    conv1 = Conv2D(3, (2, 2), activation='relu', padding='valid', kernel_initializer=initialiser, strides=2)(inputs)
-    conv2 = Conv2D(6, (3, 3), activation='relu', padding='valid', kernel_initializer=initialiser, strides=3)(conv1)
-    conv3 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv2)
-    conv4 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv3)
-    conv5 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv4)
-    conv6 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv5)
-    conv7 = Conv2D(24, (5, 5), activation='relu', padding='valid', kernel_initializer=initialiser)(conv6)
+    conv1 = Conv2D(3, (2, 2), activation='relu', padding='valid', kernel_initializer=initializer, strides=2)(inputs)
+    conv2 = Conv2D(6, (3, 3), activation='relu', padding='valid', kernel_initializer=initializer, strides=3)(conv1)
+    conv3 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer=initializer)(conv2)
+    conv4 = Conv2D(12, (5, 5), activation='relu', padding='valid', kernel_initializer=initializer)(conv3)
+    conv5 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer=initializer)(conv4)
+    conv6 = Conv2D(18, (5, 5), activation='relu', padding='valid', kernel_initializer=initializer)(conv5)
+    conv7 = Conv2D(24, (5, 5), activation='relu', padding='valid', kernel_initializer=initializer)(conv6)
     up7 = UpSampling2D(size=(3, 3))(conv7)
     merge7 = concatenate([conv5, up7], axis=3)
     up8 = UpSampling2D(size=(2, 2))(merge7)
@@ -37,7 +37,7 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     up9 = UpSampling2D(size=(3, 3))(merge8)
     up10 = UpSampling2D(size=(2, 2))(up9)
     
-    conv10 = Conv2D(nb_classes, (1, 1), activation='softmax', padding='same', kernel_initializer=initialiser)(up10)
+    conv10 = Conv2D(nb_classes, (1, 1), activation='softmax', padding='same', kernel_initializer=initializer)(up10)
 
     model = Model(inputs, conv10)
 
