@@ -50,7 +50,7 @@ def concat_prediction(predictions, image, cut_size, gt_size, pred_val=0.75):
         
         # Create empty array
         height, width, n_classes = item.shape
-        decoded_mask = np.zeros((height, width, n_classes), dtype=np.uint8)
+        decoded_mask = np.zeros((height, width, 3), dtype=np.uint8)
 
         # Set the color to the class with the highest probability
         predicted_classes = np.argmax(item, axis=2)
@@ -84,13 +84,15 @@ def calcul_accuracy(results, filename, extension):
     for name, label, color in class_encoding:
         color = np.asarray(color) / 255
 
-        # One versus all
+        # Get the indices of the class in the prediction and mask images
         mask_class_indices = np.all(ca_mask == color, axis=2)
         prediction_class_indices = np.all(results == color, axis=2)
 
-        # The class is assigned 1 and other pixels are assigned 0
+        # Create an array full of zeros with the image’s dimensions
         mask_class_vs_all = np.zeros((ca_mask.shape[0], ca_mask.shape[1]), dtype=np.uint8)
         pred_class_vs_all = np.zeros((results.shape[0], results.shape[1]), dtype=np.uint8)
+
+        # Pixels of the current class are assigned 1
         mask_class_vs_all[mask_class_indices] = 1
         pred_class_vs_all[prediction_class_indices] = 1
 
