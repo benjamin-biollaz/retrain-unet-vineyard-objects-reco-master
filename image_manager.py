@@ -170,6 +170,13 @@ class ImageManager:
                 transformation,
             )
 
+            #vertical and horizontal flipping
+            transformation = cv2.flip(img, -1) 
+            cv2.imwrite(
+                augmentation_path + file_name + "_aug-flip-hor_ver" + file_extension,
+                transformation,
+            )
+
      # Augment images trough roation and flip
     def augment_data_rotation_each_10(self, path, subfolder, augmentation_path):
         images_paths = self.fileManager.get_sample(path, subfolder)
