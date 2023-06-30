@@ -11,16 +11,23 @@ from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import *
 import tensorflow as tf
+import tensorflow.keras.backend as K
 from tensorflow.keras import initializers
+
+# Project file imports
 from file_manager import FileManager
 
-class_encoding = FileManager.get_classes_encoding()
-nb_classes = len(class_encoding)
+ # UNET Model : Symetrique
+def unet_sym(pretrained_weights=None, input_size=(144, 144, 3), seed=None):
+   
+    # To dynamically determine the number of output channels 
+    class_encoding = FileManager.get_classes_encoding()
+    nb_classes = len(class_encoding)
 
-# UNET Model : Symetrique
-def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
-    
-    initializer = tf.keras.initializers.he_normal()
+    # Used to avoid problems when loading several times the model for inference
+    K.clear_session()
+
+    initializer = tf.keras.initializers.he_normal(seed) if seed is not None else tf.keras.initializers.he_normal(283)
 
     inputs = Input(input_size)
     conv1 = Conv2D(3, (2, 2), activation='relu', padding='valid', kernel_initializer=initializer, strides=2)(inputs)
@@ -44,10 +51,12 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3)):
     model.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
 
     if pretrained_weights:
-     model.load_weights(pretrained_weights, by_name=True, skip_mismatch=True)
+        model.load_weights(pretrained_weights, by_name=True, skip_mismatch=True)
 
     return model
 
-    
+
+
+
 
 
