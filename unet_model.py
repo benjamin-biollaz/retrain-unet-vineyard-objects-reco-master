@@ -24,10 +24,10 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3), seed=None):
     class_encoding = FileManager.get_classes_encoding()
     nb_classes = len(class_encoding)
 
-    # Used to avoid problems when loading several times the model for inference
+    # Used to avoid problems when doing several inferences on the same run
     K.clear_session()
 
-    initializer = tf.keras.initializers.he_normal(seed) if seed is not None else tf.keras.initializers.he_normal(283)
+    initializer = tf.keras.initializers.he_normal(seed) if seed is not None else tf.keras.initializers.he_normal()
 
     inputs = Input(input_size)
     conv1 = Conv2D(3, (2, 2), activation='relu', padding='valid', kernel_initializer=initializer, strides=2)(inputs)
