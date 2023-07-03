@@ -20,6 +20,7 @@ import config
 
 from file_manager import FileManager
 from image_manager import ImageManager
+from binary_unet_model import binary_unet_sym
 
 class_encoding = FileManager.get_classes_encoding()
 
@@ -30,15 +31,54 @@ def val_generator(img_lst):
         img = np.asarray([img])
         yield img
 
+# Vine line prediction visualisation
+def concat_prediction_binary(predictions, image, img_list_generator, cut_size, gt_size, pred_val=0.75):
+    x = 0
+    y = 0
+    cp_x = (cut_size - gt_size)//2
+    cp_y = cp_x
+    cp_image = Image.fromarray(image)
+    predictions = predictions >= pred_val
+    for i, pred in enumerate(predictions):
+        if y + cut_size >= image.shape[0]:
+            cp_x += gt_size
+            x += gt_size
+            cp_y = (cut_size-gt_size)//2
+            y = 0
+        if x + cut_size >= image.shape[1]:
+            break
+        
+        # Keep only the first element (true for vine, false for other)
+        pred = pred[:, :, 0]
 
-# Reconstitution de l'image en une
-def concat_prediction(predictions, image, cut_size, gt_size, pred_val=0.75):
+        # Get original image pixels
+        cp_tmp = next(img_list_generator)
+        cp_tmp = np.squeeze(cp_tmp)
+
+        # Assign white to vine lines
+        mask_indices = np.where(pred == True)
+        cp_tmp[mask_indices] = (1, 1, 1)
+
+        cp_tmp = np.float32(cp_tmp*255)        
+        cp_tmp = np.uint8(cp_tmp)
+        cp_tmp = Image.fromarray(cp_tmp)
+        cp_tmp = cp_tmp.resize((gt_size, gt_size))
+        test = cv2.cvtColor(np.array(cp_tmp), cv2.COLOR_RGB2BGR)   
+        path = os.path.join(config.TEMP_OUTPUT, "test_" + str(cp_x) + str(cp_y) + ".jpg")
+        cv2.imwrite(path, test)
+        cp_image.paste(cp_tmp, (cp_x, cp_y))
+        cp_y += gt_size
+        y += gt_size
+    return cp_image
+
+
+# Concatenate the prediction for vine lines and other objects
+def concat_prediction(predictions, image, img_list_gen, cut_size, gt_size):
     x = 0
     y = 0
     cp_x = (cut_size - gt_size)//2
     cp_y = cp_x
     cp_image = Image.new('RGB', (image.shape[1], image.shape[0]))
-    # predictions = predictions >= pred_val
     for i, item in enumerate(predictions):
         if y + cut_size >= image.shape[0]:
             cp_x += gt_size
@@ -55,8 +95,17 @@ def concat_prediction(predictions, image, cut_size, gt_size, pred_val=0.75):
         # Set the color to the class with the highest probability
         predicted_classes = np.argmax(item, axis=2)
         for name, label, color in class_encoding:
+            if (label == 2):
+                continue
             mask_indices = np.where(predicted_classes == label)
             decoded_mask[mask_indices] = color
+
+        # Append previously detected vine lines
+        original_patch = next(img_list_gen)
+        original_patch = np.squeeze(original_patch)
+        #vine_indices = np.all(original_patch == (1,1,1), axis=2)  
+        vine_indices = np.all(np.abs(original_patch - (1,1,1)) <= 10/255, axis=2)
+        decoded_mask[vine_indices] = (255, 255, 255)
        
         cp_tmp = np.uint8(decoded_mask)
         cp_tmp = Image.fromarray(cp_tmp)
@@ -68,6 +117,11 @@ def concat_prediction(predictions, image, cut_size, gt_size, pred_val=0.75):
         cp_y += gt_size
         y += gt_size
     return cp_image
+
+def pre_process(image, cut_size, gt_size):
+    imageManager = ImageManager(cut_size, gt_size)
+    img_list = imageManager.image_splitting(image, cut_size, gt_size)
+    return img_list, len(img_list)
 
 
 def calcul_accuracy(results, filename, extension):
@@ -81,7 +135,9 @@ def calcul_accuracy(results, filename, extension):
     ca_mask = np.asarray(ca_mask) / 255
     results = np.asarray(results) / 255
 
-    for name, label, color in class_encoding:
+    class_encoding_with_vines = class_encoding
+    class_encoding_with_vines.append(["Vine", len(class_encoding), (255,255,255)])
+    for name, label, color in class_encoding_with_vines:
         color = np.asarray(color) / 255
 
         # Get the indices of the class in the prediction and mask images
@@ -147,9 +203,6 @@ def calcul_accuracy(results, filename, extension):
     print("IoU =", np.sum(intersection) / np.sum(union))
     print("F1 score =", 2*(precision * recall) / (precision + recall))
 
-
-
-
 def adaptive_histogram_equalization_rgb(image: [], grid_size=50):
     """ Return an image RGB with the adaptive histogram equalization applied
     """
@@ -182,8 +235,10 @@ def main(argv):
     file = ''
     cut_size = 144
     gt_size = 144
-    weights = "./Weights/unet_vines.hdf5"
-    result_dir = './Results/'
+    vine_weights = "./Weights/unet_vines.hdf5"
+    other_weights = "./Weights/scratch_5epochs.hdf5"
+    vine_result_dir = './Results/vine_temp/'
+    result_dir = "./Results/cascade/"
     percent = 0.6
     stats = False
     hist = False
@@ -212,7 +267,7 @@ def main(argv):
         elif opt in ("-c", "--size"):
             cut_size = int(arg)
         elif opt in ("-w", "--weights"):
-            weights = str(arg)
+            vine_weights = str(arg)
         elif opt in ("-r", "--results"):
             result_dir = str(arg)
         elif opt == "-p":
@@ -227,11 +282,13 @@ def main(argv):
     if file == '':
         print("Usage: unet_validation -f <file path> optional(-c <cut size> -g <gt size> -w <weights path> -r <results folder>)")
         sys.exit(2)
-    if not os.path.isdir(result_dir):
-        os.mkdir(result_dir)
+    if not os.path.isdir(vine_result_dir):
+        os.mkdir(vine_result_dir)
     input_size = (cut_size, cut_size, 3)
     filename, extension = FileManager.get_filename_n_extension(self=None, path=file)
     image = cv2.imread(file)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
     if hist:
         image = adaptive_histogram_equalization_rgb(image)
 
@@ -246,22 +303,35 @@ def main(argv):
         cut_size = int(config.CUT_SIZE/ratio)
         gt_size = int(config.GT_SIZE/ratio)
 
-    imageManager = ImageManager(cut_size, gt_size)
-    img_list = imageManager.image_splitting(image, cut_size, gt_size)
-    count_img = len(img_list)
+    # Pre-processing to have the same conditions as in training
+    img_list, count_img = pre_process(image, cut_size, gt_size)
     test_gen = val_generator(img_list)
 
-    # Prediction avec les weights entrainer
-    model = unet_sym(pretrained_weights=weights, input_size=input_size)
-    print(model.summary())
+    # Vine lines prediction
+    model = binary_unet_sym(pretrained_weights=vine_weights, input_size=input_size)
     results = model.predict_generator(test_gen, count_img, verbose=1)
+    res_image = concat_prediction_binary(results, image, val_generator(img_list), cut_size, gt_size, percent)
 
-    # Sauvegarde du resultat
-    res_image = concat_prediction(results, image, cut_size, gt_size, percent)
-    if result_dir[-1] == '/':
-        res_image.save(result_dir + filename + "_" + str(cut_size) + "_" + str(gt_size) + datetime.now().strftime("%Y%m%d-%H%M%S") + extension)
-    else:
-        res_image.save(result_dir + "/" + filename + "_" + cut_size + "_" + gt_size + datetime.now().strftime("%Y%m%d-%H%M%S") + extension)
+    # Save temp result (only vine lines segmented)
+    temp_vine_path = vine_result_dir + filename + "_" + str(cut_size) + "_" + str(gt_size) + datetime.now().strftime("%Y%m%d-%H%M%S") + extension 
+    res_image.save(temp_vine_path)
+
+    # Pre-process image with vine lines detected
+    image_vine_detected = cv2.imread(temp_vine_path)
+    image_vine_detected = cv2.cvtColor(image_vine_detected, cv2.COLOR_BGR2RGB)
+    img_list_other, count_img_other = pre_process(image_vine_detected, cut_size, gt_size)
+    test_gen_other = val_generator(img_list_other)
+
+    # Other objects prediction
+    other_model = unet_sym(pretrained_weights=other_weights, input_size=input_size)
+    print("Detecting other objects")
+    results_other = other_model.predict_generator(test_gen_other, count_img_other, verbose=1)
+    res_image_other = concat_prediction(results_other, image_vine_detected, val_generator(img_list_other), cut_size, gt_size)
+
+    # Save concatenated results of both models
+    res_image_other.save(result_dir + filename + "_" + str(cut_size) + "_" + str(gt_size) + datetime.now().strftime("%Y%m%d-%H%M%S") + extension )
+
+    # Metrics
     if stats:
         calcul_accuracy(res_image, filename, extension)
 
