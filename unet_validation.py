@@ -32,7 +32,7 @@ def val_generator(img_lst):
         yield img
 
 # Vine line prediction visualisation
-def concat_prediction_binary(predictions, image, img_list_generator, cut_size, gt_size, pred_val=0.75):
+def concat_prediction_binary(predictions, image, img_list_generator, cut_size, gt_size, pred_val=0.5):
     x = 0
     y = 0
     cp_x = (cut_size - gt_size)//2
@@ -95,8 +95,6 @@ def concat_prediction(predictions, image, img_list_gen, cut_size, gt_size):
         # Set the color to the class with the highest probability
         predicted_classes = np.argmax(item, axis=2)
         for name, label, color in class_encoding:
-            if (label == 2):
-                continue
             mask_indices = np.where(predicted_classes == label)
             decoded_mask[mask_indices] = color
 
@@ -142,7 +140,8 @@ def calcul_accuracy(results, filename, extension):
 
         # Get the indices of the class in the prediction and mask images
         mask_class_indices = np.all(ca_mask == color, axis=2)
-        prediction_class_indices = np.all(results == color, axis=2)
+        #prediction_class_indices = np.all(results == color, axis=2)
+        prediction_class_indices = np.all(np.abs(results - color) <= 10/255, axis=2)
 
         # Create an array full of zeros with the image’s dimensions
         mask_class_vs_all = np.zeros((ca_mask.shape[0], ca_mask.shape[1]), dtype=np.uint8)
@@ -236,10 +235,10 @@ def main(argv):
     cut_size = 144
     gt_size = 144
     vine_weights = "./Weights/unet_vines.hdf5"
-    other_weights = "./Weights/scratch_5epochs.hdf5"
+    other_weights = "./Weights/unet_vines_20230704-111059.hdf5"
     vine_result_dir = './Results/vine_temp/'
     result_dir = "./Results/cascade/"
-    percent = 0.6
+    percent = 0.5
     stats = False
     hist = False
     new_data_resolution = 0
@@ -333,7 +332,7 @@ def main(argv):
 
     # Metrics
     if stats:
-        calcul_accuracy(res_image, filename, extension)
+        calcul_accuracy(res_image_other, filename, extension)
 
 
 if __name__ == "__main__":
