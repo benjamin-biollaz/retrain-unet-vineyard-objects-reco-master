@@ -3,7 +3,7 @@
 # |  _ \ _   _  __| | ___      | |    __ _| |__           unet_model_mathematica.py                         #
 # | | | | | | |/ _` |/ _ \_____| |   / _` | '_ \          By: Jérôme Treboux <jerome.treboux@hevs.ch>       #
 # | |_| | |_| | (_| |  __/_____| |__| (_| | |_) |         Created: 2021/04/30 10:44:14 by Jérôme Treboux    #
-# |____/ \__,_|\__,_|\___|     |_____\__,_|_.__/          Updated: 2023/07/03 14:30:29 by Benjamin Biollaz  #
+# |____/ \__,_|\__,_|\___|     |_____\__,_|_.__/          Updated: 2021/04/30 10:44:14 by Jérôme Treboux    #
 #                                                                                                           #
 # ********************************************************************************************************* #
 
@@ -25,9 +25,9 @@ def unet_sym(pretrained_weights=None, input_size=(144, 144, 3), seed=None):
     nb_classes = len(class_encoding)
 
     # Used to avoid problems when doing several inferences on the same run
-    K.clear_session()
+    # K.clear_session()
 
-    initializer = tf.keras.initializers.he_normal()
+    initializer = tf.keras.initializers.he_normal(seed) if seed is not None else tf.keras.initializers.he_normal()
 
     inputs = Input(input_size)
     conv1 = Conv2D(3, (2, 2), activation='relu', padding='valid', kernel_initializer=initializer, strides=2)(inputs)

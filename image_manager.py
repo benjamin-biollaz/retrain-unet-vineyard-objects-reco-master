@@ -116,7 +116,7 @@ class ImageManager:
 
         # pixels with no class are categorised as background
         indexes = np.all(encoded_mask == [0, 0, 0], axis=2)
-        encoded_mask[indexes] = to_categorical(0, len(class_encoding), dtype ="uint8")
+        encoded_mask[indexes] = to_categorical(1, len(class_encoding), dtype ="uint8")
 
         return encoded_mask
 
