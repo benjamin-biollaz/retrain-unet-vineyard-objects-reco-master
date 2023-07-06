@@ -45,3 +45,13 @@ class FileManager:
                 palette[paletteIndex][2] = (float(data[i][2]), float(data[i][3]), float(data[i][4]))
             
             return palette
+        
+    def create_dataset_directories(self):
+        mandatory_directories = ["train/images", "train_labels/labels", "validation/images", "validation_labels/labels", "data_augmentation/images", "data_augmentation_labels/labels"]
+        dataset_directory = "./datasets/"
+
+        for dir in mandatory_directories:
+            full_path = dataset_directory + dir
+            if (not os.path.exists(full_path)):
+                os.mkdir(full_path)
+
