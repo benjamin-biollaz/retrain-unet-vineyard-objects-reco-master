@@ -1,17 +1,7 @@
-# RETRAIN - UNET Vine Line Reco
-
-### _This project was made possible thanks to the [DUDE-Lab of the HES-SO Valais](https://www.hevs.ch/fr/mini-sites/projets-produits/dude-lab/)._
-
-Dear visitor,
-
-Welcome to the project realized for my **master thesis** at the HES-SO MASTER in Lausanne, 
-_entitled in French "CARTES INTELLIGENTES ET MÉTHODES DE MACHINE LEARNING DANS L'AGRICULTURE"_.
-
-This project contains all the additional elements not directly included in the report that helped answer the research question :  **How to train a model, initially built from images taken by drone, on images coming from online map supports such as swisstopo ?**
-
-Enjoy your discovery.
-
-Aurore Pittet
+# Vineyard aerial detection: from binary to multi-label image segmentation
+This repository holds the code for my Bachelor thesis in information technology at HES-SO Valais/Wallis. I received a binary image segmentation model that identify vine lines only as input. My goal is to extend the capabilities of this model to recognize other objects. The repository contain two branches:
+- master: The predictions and training are done by two different models (i.e., one for vine lines, another for the rest)
+- retrain: The predictions and training are done on a single model.
 
 ## Contents details
 
