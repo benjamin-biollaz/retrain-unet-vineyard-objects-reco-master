@@ -20,6 +20,7 @@ import config
 
 from file_manager import FileManager
 from image_manager import ImageManager
+from metric_manager import MetricManager
 from binary_unet_model import binary_unet_sym
 
 class_encoding = FileManager.get_classes_encoding()
@@ -71,7 +72,6 @@ def concat_prediction_binary(predictions, image, img_list_generator, cut_size, g
         y += gt_size
     return cp_image
 
-
 # Concatenate the prediction for vine lines and other objects
 def concat_prediction(predictions, image, img_list_gen, cut_size, gt_size):
     x = 0
@@ -121,8 +121,9 @@ def pre_process(image, cut_size, gt_size):
     img_list = imageManager.image_splitting(image, cut_size, gt_size)
     return img_list, len(img_list)
 
-
 def calcul_accuracy(results, filename, extension):
+
+    metric_manager = MetricManager()
 
     ca_mask = cv2.imread("datasets/test_labels/" + filename + extension)
 
@@ -136,12 +137,12 @@ def calcul_accuracy(results, filename, extension):
     class_encoding_with_vines = class_encoding
     class_encoding_with_vines.append(["Vine", len(class_encoding), (255,255,255)])
     for name, label, color in class_encoding_with_vines:
-        color = np.asarray(color) / 255
+        normalized_color = np.asarray(color) / 255
 
         # Get the indices of the class in the prediction and mask images
-        mask_class_indices = np.all(ca_mask == color, axis=2)
+        mask_class_indices = np.all(ca_mask == normalized_color, axis=2)
         #prediction_class_indices = np.all(results == color, axis=2)
-        prediction_class_indices = np.all(np.abs(results - color) <= 10/255, axis=2)
+        prediction_class_indices = np.all(np.abs(results - normalized_color) <= 10/255, axis=2)
 
         # Create an array full of zeros with the image’s dimensions
         mask_class_vs_all = np.zeros((ca_mask.shape[0], ca_mask.shape[1]), dtype=np.uint8)
@@ -175,6 +176,9 @@ def calcul_accuracy(results, filename, extension):
         print("Precision =", precision, "|Recall =", recall, "F1 =", f1)
         print("Pixel Accuracy =", (true_pos + true_neg) / total)
         print("IoU =", IOU)
+        if (name != "Other"):
+            bounding_box_IOU = metric_manager.compute_bounding_box_IOU(results, ca_mask, normalized_color)
+            print("Bounding box IOU =", bounding_box_IOU)
 
     # Calculate average values
     intersection = np.logical_and(ca_mask, results)
@@ -333,7 +337,6 @@ def main(argv):
     # Metrics
     if stats:
         calcul_accuracy(res_image_other, filename, extension)
-
 
 if __name__ == "__main__":
     main(sys.argv[1:])
