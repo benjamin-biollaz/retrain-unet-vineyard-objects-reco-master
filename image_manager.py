@@ -122,9 +122,6 @@ class ImageManager:
     
     def extract_bounding_boxes_from_segmentation_mask(self, img, class_color):
             
-        # Convert PIL image to numpy array for computation
-        img = np.asarray(img)
-
         # To find contours, the foreground should be white and the background black
         class_indexes = np.all(np.abs(img - class_color) <= 10/255, axis=2)
 
@@ -150,9 +147,6 @@ class ImageManager:
                 boxes_list.append(box)
                 cv2.drawContours(img,[box],0,(0,255,0),2)
 
-        # img = np.float32(img)
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # cv2.imwrite("Results/test.jpg", img)
         return boxes_list
     
     # Augment images trough roation and flip
