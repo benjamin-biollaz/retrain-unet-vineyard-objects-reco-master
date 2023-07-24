@@ -239,7 +239,7 @@ def main(argv):
     cut_size = 144
     gt_size = 144
     vine_weights = "./Weights/unet_vines.hdf5"
-    other_weights = "./Weights/other_objects_25epochs.hdf5"
+    other_weights = "./Weights/experiments/two_models/other_objects_25epochs.hdf5"
     vine_result_dir = './Results/vine_temp/'
     result_dir = "./Results/cascade/"
     percent = 0.5
